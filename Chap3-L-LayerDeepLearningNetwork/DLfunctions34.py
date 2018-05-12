@@ -120,6 +120,7 @@ def layerActivationForward(A_prev, W, b, activationFunc):
     # Compute the activation for tanh
     elif activationFunc == 'tanh':
         A, activation_cache = tanh(Z)  
+    # Cache the forward-cache and activation_cache
     cache = (forward_cache, activation_cache)
     return A, cache
 
@@ -131,7 +132,7 @@ def layerActivationForward(A_prev, W, b, activationFunc):
 #         hiddenActivationFunc - Activation function at hidden layers Relu/tanh
 # Returns : AL 
 #           caches
-# The forward propoagtion uses the Relu/tanh activation from layer 1..L-1 and sigmoid actiovation at layer L
+# The forward propagtion uses the Relu/tanh activation from layer 1..L-1 and sigmoid actiovation at layer L
 def forwardPropagationDeep(X, parameters,hiddenActivationFunc='relu'):
     caches = []
     # Set A to X (A0)
@@ -173,6 +174,8 @@ def computeCost(AL,Y):
 # dL/dZ_prev=dL/dZl*W
 def layerActivationBackward(dA, cache, activationFunc):
     forward_cache, activation_cache = cache
+    
+    # Compute derivative based on activation function
     if activationFunc == "relu":
         dZ = reluDerivative(dA, activation_cache)           
     elif activationFunc == "sigmoid":
@@ -180,6 +183,7 @@ def layerActivationBackward(dA, cache, activationFunc):
     elif activationFunc == "tanh":
         dZ = tanhDerivative(dA, activation_cache)
     
+    # Compute gradients
     A_prev, W, b = forward_cache
     numtraining = float(A_prev.shape[1])
     dW = 1/numtraining *(np.dot(dZ,A_prev.T))
@@ -204,6 +208,7 @@ def layerActivationBackward(dA, cache, activationFunc):
 def backwardPropagationDeep(AL, Y, caches,hiddenActivationFunc='relu'):
     #initialize the gradients
     gradients = {}
+    
     # Set the number of layers
     L = len(caches) 
     m = float(AL.shape[1])
@@ -254,7 +259,7 @@ def gradientDescent(parameters, gradients, learningRate):
 #       : hiddenActivationFunc - Activation function at hidden layer relu /tanh
 #       : learning rate
 #       : num of iterations
-#output : Updated weights after 1 iteration
+#output : Updated weights  and biases
 
 def L_Layer_DeepModel(X, Y, layersDimensions, hiddenActivationFunc='relu', learning_rate = .3, num_iterations = 10000, fig="figx.png"):#lr was 0.009
 

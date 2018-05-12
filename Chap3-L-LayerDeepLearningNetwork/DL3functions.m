@@ -1,3 +1,10 @@
+############################################################################################################
+#
+# File: DLfunctions3.m
+# Developer: Tinniam V Ganesh
+# Date : 30 Jan 2018
+#
+##########################################################################################################
 1;
 # Define sigmoid function
 function [A,cache] = sigmoid(Z)
@@ -49,8 +56,8 @@ end
 
 
 # Initialize model for L layers
-# Input : List of units in each layer
-# Returns: Initial weights and biases matrices for all layers
+# Input : Vector of units in each layer
+# Returns: Initial weights and biases matrices for all layers as a cell array
 function [W b] = initializeDeepModel(layerDimensions)
     rand ("seed", 3);
     # note the Weight matrix at layer 'l' is a matrix of size (l,l-1)
@@ -70,7 +77,7 @@ end
 # Input : A_prec - Activation of previous layer
 #         W,b - Weight and bias matrices and vectors
 #         activationFunc - Activation function - sigmoid, tanh, relu etc
-# Returns : The Activation of this layer
+# Returns : A, forward_cache, activation_cache
 #         : 
 # Z = W * X + b
 # A = sigmoid(Z), A= Relu(Z), A= tanh(Z)
@@ -95,8 +102,7 @@ end
 # Input : X - Input Features
 #         paramaters: Weights and biases
 #         hiddenActivationFunc - Activation function at hidden layers Relu/tanh
-# Returns : AL 
-#           caches
+# Returns : AL, forward_caches, activation_caches as a cell array
 # The forward propoagtion uses the Relu/tanh activation from layer 1..L-1 and sigmoid actiovation at layer L
 function [AL forward_caches activation_caches] = forwardPropagationDeep(X, weights,biases, hiddenActivationFunc='relu')
     # Create an empty cell array
@@ -135,12 +141,10 @@ function [cost]= computeCost(AL,Y)
     cost = -1/numTraining * sum((Y .* log(AL)) + (1-Y) .* log(1-AL));
 end
 
-# Compute the backpropoagation for 1 cycle
+# Compute the layerActivationBackward
 # Input : Neural Network parameters - dA
 #       # cache - forward_cache & activation_cache
-#       # Input features
-#       # Output values Y
-# Returns: Gradients
+# Returns: dA_prev, dW, db
 # dL/dWi= dL/dZi*Al-1
 # dl/dbl = dL/dZl
 # dL/dZ_prev=dL/dZl*W
@@ -167,24 +171,20 @@ end
 # Compute the backpropoagation for 1 cycle
 # Input : AL: Output of L layer Network - weights
 #       # Y  Real output
-#       # caches -- list of caches containing:
+#       # activation_caches 
+#       # forward_caches
 #       every cache of layerActivationForward() with "relu"/"tanh"
 #       #(it's caches[l], for l in range(L-1) i.e l = 0...L-2)
 #       #the cache of layerActivationForward() with "sigmoid" (it's caches[L-1])
 #       hiddenActivationFunc - Activation function at hidden layers
 #    
-#   Returns:
-#    gradients -- A dictionary with the gradients
-#                 gradients["dA" + str(l)] = ... 
-#                 gradients["dW" + str(l)] = ...
-
+#   Returns (cell array): gradsDA,gradsDW, gradsDB
 function [gradsDA gradsDW gradsDB]= backwardPropagationDeep(AL, Y, activation_caches,forward_caches,hiddenActivationFunc='relu')
     
 
     # Set the number of layers
     L = length(activation_caches); 
     m = size(AL)(2);
-
     
     # Initializing the backpropagation 
     # dl/dAL= -(y/a + (1-y)/(1-a)) - At the output layer
@@ -217,7 +217,6 @@ function [gradsDA gradsDW gradsDB]= backwardPropagationDeep(AL, Y, activation_ca
         gradsDA{l}= dA_prev_temp;
         gradsDW{l}= dW_temp;
         gradsDB{l}= db_temp;
-
     endfor
 
 end
@@ -227,7 +226,7 @@ end
 # Input : Weights and biases
 #       : gradients
 #       : learning rate
-#output : Updated weights after 1 iteration
+#output : Updated weights and biases after 1 iteration
 function [weights biases] = gradientDescent(weights, biases,gradsW,gradsB, learningRate)
 
     L = size(weights)(2); # number of layers in the neural network
@@ -240,7 +239,14 @@ function [weights biases] = gradientDescent(weights, biases,gradsW,gradsB, learn
 end
 
 
-
+#  Execute a L layer Deep learning model
+# Input : X - Input features
+#       : Y output
+#       : layersDimensions - Dimension of layers
+#       : hiddenActivationFunc - Activation function at hidden layer relu /tanh
+#       : learning rate
+#       : num of iterations
+#output : Updated weights and biases 
 function [weights biases costs] = L_Layer_DeepModel(X, Y, layersDimensions, hiddenActivationFunc='relu', learning_rate = .3, num_iterations = 10000)#lr was 0.009
 
     rand ("seed", 1);
@@ -274,7 +280,7 @@ function [weights biases costs] = L_Layer_DeepModel(X, Y, layersDimensions, hidd
     
 end
  
- 
+ #Plot cost vs iterations
  function plotCostVsIterations(maxIterations,costs)
      iterations=[0:1000:maxIterations];
      plot(iterations,costs);
@@ -317,6 +323,7 @@ function plotDecisionBoundary(data,weights, biases,hiddenActivationFunc="relu")
 
 end
 
+# Compute scores
 function [AL]= scores(weights, biases, X,hiddenActivationFunc="relu")
     [AL forward_caches activation_caches] = forwardPropagationDeep(X, weights, biases,hiddenActivationFunc);
 end 

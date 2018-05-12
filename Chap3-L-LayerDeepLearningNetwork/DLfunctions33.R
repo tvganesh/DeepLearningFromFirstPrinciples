@@ -8,6 +8,7 @@
 library(ggplot2)
 library(PRROC)
 library(dplyr)
+
 # Compute the sigmoid of a vector
 sigmoid <- function(Z){
     A <- 1/(1+ exp(-Z))
@@ -63,11 +64,6 @@ tanhDerivative   <- function(dA, cache){
     return(dZ)
 }
 
-# Initialize the model 
-# Input : number of features
-#         number of hidden units
-#         number of units in output
-# Returns: Weight and bias matrices and vectors
 
 
 # Initialize model for L layers
@@ -104,7 +100,7 @@ initializeDeepModel <- function(layerDimensions){
 # Input : A_prec - Activation of previous layer
 #         W,b - Weight and bias matrices and vectors
 #         activationFunc - Activation function - sigmoid, tanh, relu etc
-# Returns : The Activation of this layer
+# Returns(list) : The Activation of this layer
 #         : 
 # Z = W * X + b
 # A = sigmoid(Z), A= Relu(Z), A= tanh(Z)
@@ -133,9 +129,9 @@ layerActivationForward <- function(A_prev, W, b, activationFunc){
 # Compute the forward propagation for layers 1..L
 # Input : X - Input Features
 #         paramaters: Weights and biases
-# Returns : AL 
-#           caches
-# The forward propoagtion uses the Relu/tanh activation from layer 1..L-1 and sigmoid actiovation at layer L
+# Returns (list) : AL
+#           caches 
+# The forward prooagtion uses the Relu/tanh activation from layer 1..L-1 and sigmoid actiovation at layer L
 forwardPropagationDeep <- function(X, parameters,hiddenActivationFunc='relu'){
     caches <- list()
     # Set A to X (A0)
@@ -149,6 +145,7 @@ forwardPropagationDeep <- function(X, parameters,hiddenActivationFunc='relu'){
         # Loop throug from W1,W2... WL-1
         W <- parameters[[paste("W",l,sep="")]]
         b <- parameters[[paste("b",l,sep="")]]
+        
         # Compute the forward propagation through layer 'l' using the activation function
         actForward <- layerActivationForward(A_prev, 
                                              W, 
@@ -194,7 +191,7 @@ computeCost <- function(AL,Y){
 #       # cache - forward_cache & activation_cache
 #       # Input features
 #       # Output values Y
-# Returns: Gradients
+# Returns: Gradients as list
 # dL/dWi= dL/dZi*Al-1
 # dl/dbl = dL/dZl
 # dL/dZ_prev=dL/dZl*W
@@ -231,7 +228,7 @@ layerActivationBackward  <- function(dA, cache, activationFunc){
 #       hiddenActivationFunc - Activation function at hidden layers
 #    
 #   Returns:
-#    gradients -- A dictionary with the gradients
+#    gradients -- A list with the gradients
 #                 gradients["dA" + str(l)] = ... 
 #      
 backwardPropagationDeep <- function(AL, Y, caches,hiddenActivationFunc='relu'){
@@ -275,8 +272,6 @@ backwardPropagationDeep <- function(AL, Y, caches,hiddenActivationFunc='relu'){
         gradients[[paste("db",l,sep="")]] <- retvals[['db']]
     }
     
-    
-    
     return(gradients)
 }
 
@@ -285,7 +280,7 @@ backwardPropagationDeep <- function(AL, Y, caches,hiddenActivationFunc='relu'){
 # Input : Weights and biases
 #       : gradients
 #       : learning rate
-#output : Updated weights after 1 iteration
+#output : Updated weights after 1 iteration as a list
 gradientDescent  <- function(parameters, gradients, learningRate){
     
     L = length(parameters)/2 # number of layers in the neural network
@@ -308,8 +303,7 @@ gradientDescent  <- function(parameters, gradients, learningRate){
 #       : hiddenActivationFunc - Activation function at hidden layer relu /tanh
 #       : learning rate
 #       : num of iterations
-#output : Updated weights after each  iteration
-
+#output : Updated weights and biases 
 L_Layer_DeepModel <- function(X, Y, layersDimensions,
                               hiddenActivationFunc='relu', 
                               learningRate = .3, 

@@ -2,7 +2,7 @@
 #
 # Created by: Tinniam V Ganesh
 # Date : 4 Jan 2018
-# File: DLfunctions1.py
+# File: DLfunctions.m
 #
 ##############################################################################################
 1;
@@ -11,7 +11,6 @@ function a = sigmoid(z)
   a = 1 ./ (1+ exp(-z));
 end
 
-# Compute the loss
 # Compute the loss
 # Inputs: numTraining
 #       : Y

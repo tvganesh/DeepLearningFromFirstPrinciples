@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Sun Jan 14 19:10:25 2018
-
-@author: Ganesh
-"""
-######################################################
-# DL functions
-######################################################
+############################################################################################################
+#
+# File: DLfunctions61.py
+# Developer: Tinniam V Ganesh
+# Date : 16 Apr 2018
+#
+##########################################################################################################
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
@@ -43,7 +42,7 @@ def softmax(Z):
     cache=Z
     return A,cache
 
-# Conmpute the softmax of a vector
+# Conmpute the Stable Softmax of a vector
 def stableSoftmax(Z):  
     #Compute the softmax of vector x in a numerically stable way.
     shiftZ = Z.T - np.max(Z.T,axis=1).reshape(-1,1)
@@ -93,7 +92,7 @@ def softmaxDerivative(dA, cache,y,numTraining):
       dZ[range(int(numTraining)),y[:,0]] -= 1
       return(dZ)
 
-# Compute the derivative of softmax
+# Compute the derivative of Stable Softmax
 def stableSoftmaxDerivative(dA, cache,y,numTraining):
       # Note : dA not used. dL/dZ = dL/dA * dA/dZ = pi-yi
       Z = cache 
@@ -254,10 +253,10 @@ def forwardPropagationDeep(X, parameters,keep_prob=1, hiddenActivationFunc='relu
 
 
 # Compute the cost
-# Input : Activation of last layer
-#       : Output from data
+# Input : parameters
+#       : AL
 #       : Y
-#       :outputActivationFunc - Activation function at output - sigmoid/softmax
+#       :outputActivationFunc - Activation function at output - sigmoid/softmax/tanh
 # Output: cost
 def computeCost(parameters,AL,Y,outputActivationFunc="sigmoid"):
     if outputActivationFunc=="sigmoid":
@@ -277,14 +276,13 @@ def computeCost(parameters,AL,Y,outputActivationFunc="sigmoid"):
 
 
 # Compute the cost with regularization
-# Input : Activation of last layer
-#       : Output from data
+# Input : parameters
+#       : AL
 #       : Y
-#       :outputActivationFunc - Activation function at output - sigmoid/softmax
+#       : lambd
+#       :outputActivationFunc - Activation function at output - sigmoid/softmax/tanh
 # Output: cost
 def computeCostWithReg(parameters,AL,Y,lambd, outputActivationFunc="sigmoid"):
-  
-
     if outputActivationFunc=="sigmoid":
         m= float(Y.shape[1])
         # Element wise multiply for logprobs
@@ -299,8 +297,7 @@ def computeCostWithReg(parameters,AL,Y,lambd, outputActivationFunc="sigmoid"):
         
         L2RegularizationCost = (lambd/(2*m))*L2RegularizationCost   
         cost = cost +  L2RegularizationCost
-
-                        
+                       
     elif outputActivationFunc=="softmax":
         # Take transpose of Y for softmax
         Y=Y.T
@@ -321,10 +318,11 @@ def computeCostWithReg(parameters,AL,Y,lambd, outputActivationFunc="sigmoid"):
      
     return cost
 
-# Compute the backpropoagation for 1 cycle
+# Compute the backpropoagation for 1 cycle with dropout included
 # Input : Neural Network parameters - dA
 #       # cache - forward_cache & activation_cache
 #       # Input features
+#       # keep_prob
 #       # Output values Y
 # Returns: Gradients
 # dL/dWi= dL/dZi*Al-1
@@ -365,8 +363,10 @@ def layerActivationBackward(dA, cache, Y, keep_prob=1, activationFunc="relu"):
 # Compute the backpropoagation with regularization for 1 cycle
 # Input : Neural Network parameters - dA
 #       # cache - forward_cache & activation_cache
-#       # Input features
 #       # Output values Y
+#       # lambd
+#       # activationFunc
+# Returns dA_prev, dW, db
 # Returns: Gradients
 # dL/dWi= dL/dZi*Al-1
 # dl/dbl = dL/dZl
@@ -397,20 +397,21 @@ def layerActivationBackwardWithReg(dA, cache, Y, lambd, activationFunc):
         #print("dW=",dW)
         db = 1/numtraining * np.sum(dZ, axis=1, keepdims=True)
         #print("db=",db)
-        dA_prev = np.dot(W.T,dZ)    
-
-        
+        dA_prev = np.dot(W.T,dZ)           
     return dA_prev, dW, db
 
 # Compute the backpropoagation for 1 cycle
 # Input : AL: Output of L layer Network - weights
 #       # Y  Real output
 #       # caches -- list of caches containing:
+#       # dropoutMat
+#       # lambd
+#       # keep_prob
 #       every cache of layerActivationForward() with "relu"/"tanh"
 #       #(it's caches[l], for l in range(L-1) i.e l = 0...L-2)
 #       #the cache of layerActivationForward() with "sigmoid" (it's caches[L-1])
-#       hiddenActivationFunc - Activation function at hidden layers - relu/sigmoid/tanh
-#       #         outputActivationFunc - Activation function at output - sigmoid/softmax
+#       # hiddenActivationFunc - Activation function at hidden layers - relu/sigmoid/tanh
+#       #outputActivationFunc - Activation function at output - sigmoid/softmax
 #    
 #   Returns:
 #    gradients -- A dictionary with the gradients
@@ -498,10 +499,7 @@ def gradientDescent(parameters, gradients, learningRate,outputActivationFunc="si
         parameters["b" + str(L)] = parameters['b'+str(L)] -learningRate* gradients['db' + str(L)]
     elif outputActivationFunc=="softmax":
         parameters["W" + str(L)] = parameters['W'+str(L)] -learningRate* gradients['dW' + str(L)].T 
-        parameters["b" + str(L)] = parameters['b'+str(L)] -learningRate* gradients['db' + str(L)].T
-
-    
-    
+        parameters["b" + str(L)] = parameters['b'+str(L)] -learningRate* gradients['db' + str(L)].T   
     return parameters
 
 
@@ -513,10 +511,13 @@ def gradientDescent(parameters, gradients, learningRate,outputActivationFunc="si
 #       : Y output
 #       : layersDimensions - Dimension of layers
 #       : hiddenActivationFunc - Activation function at hidden layer relu /tanh/sigmoid
+#       : outputActivationFunc - Activation function at output layer sigmoid/softmax
 #       : learning rate
+#       : lambd
+#       : keep_prob
 #       : num of iteration
-#       : outputActivationFunc - Activation function at output - sigmoid/softmax
-#output : Updated weights after 1 iteration
+#       : initType
+#output : parameters
     
 def L_Layer_DeepModel(X1, Y1, layersDimensions, hiddenActivationFunc='relu', outputActivationFunc="sigmoid", 
                       learningRate = .3,  lambd=0, keep_prob=1, num_iterations = 10000,initType="default", print_cost=False,figure="figa.png"):
@@ -573,14 +574,15 @@ def L_Layer_DeepModel(X1, Y1, layersDimensions, hiddenActivationFunc='relu', out
     return parameters
 
 #  Execute a L layer Deep learning model Stoachastic Gradient Descent
-# Input : X - Input features
-#       : Y output
+# Input : X1 - Input features
+#       : Y1- output
 #       : layersDimensions - Dimension of layers
 #       : hiddenActivationFunc - Activation function at hidden layer relu /tanh/sigmoid
-#       : learning rate
-#       : num of iteration
 #       : outputActivationFunc - Activation function at output - sigmoid/softmax
-#output : Updated weights after 1 iteration
+#       : learning rate
+#       : mini_batch_size
+#       : num_epochs
+#output : parameters
 
 def L_Layer_DeepModel_SGD(X1, Y1, layersDimensions, hiddenActivationFunc='relu', outputActivationFunc="sigmoid",learningRate = .3, mini_batch_size = 64, num_epochs = 2500, print_cost=False):#lr was 0.009
 
@@ -634,6 +636,11 @@ def L_Layer_DeepModel_SGD(X1, Y1, layersDimensions, hiddenActivationFunc='relu',
 
 
 # Create random mini batches
+# Input : X - Input features
+#       : Y- output
+#       : miniBatchSizes
+#       : seed
+#output : mini_batches
 def random_mini_batches(X, Y, miniBatchSize = 64, seed = 0):
     
     np.random.seed(seed)    
@@ -751,7 +758,7 @@ def plot_decision_boundary1(X, y,W1,b1,W2,b2,figure2="figc.png"):
     plt.ylim(yy.min(), yy.max())
     plt.savefig(figure2, bbox_inches='tight')
     
-    
+# Load the circles data set  
 def load_dataset():
     np.random.seed(1)
     train_X, train_Y = sklearn.datasets.make_circles(n_samples=300, noise=.05)

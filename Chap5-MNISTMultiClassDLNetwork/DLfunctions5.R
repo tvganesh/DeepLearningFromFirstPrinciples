@@ -26,7 +26,7 @@ reluOld   <-function(Z){
   return(retvals)
 }
 
-# Compute the Relu of a vector (much better performance!)
+# Compute the Relu (current) of a vector (much better performance!)
 relu   <-function(Z){
     # Perform relu. Set values less that equal to 0 as 0
     Z[Z<0]=0
@@ -84,6 +84,7 @@ tanhDerivative   <- function(dA, cache){
   return(dZ)
 }
 
+# This function is used in computing the softmax derivative
 # Populate a matrix of 1s in rows where Y==1
 # This may need to be extended for K classes. Currently
 # supports K=3 & K=10
@@ -110,6 +111,7 @@ popMatrix <- function(Y,numClasses){
     return(Y1)
 }
 
+# Compute the softmax derivative
 softmaxDerivative    <- function(dA, cache ,y,numTraining,numClasses){
   # Note : dA not used. dL/dZ = dL/dA * dA/dZ = pi-yi
   Z <- cache 
@@ -119,23 +121,13 @@ softmaxDerivative    <- function(dA, cache ,y,numTraining,numClasses){
   probs = exp_scores / rowSums(exp_scores)
   # Create a matrix of zeros
   Y1=popMatrix(y,numClasses)
-  #a=rep(0,times=length(Y))
-  #Y1=matrix(a,nrow=length(Y),ncol=numClasses)
-  #Set the rows and columns as 1's where Y is the class value
-
   dZ = probs-Y1
   return(dZ)
 }
 
-# Initialize the model 
-# Input : number of features
-#         number of hidden units
-#         number of units in output
-# Returns: Weight and bias matrices and vectors
-
 
 # Initialize model for L layers
-# Input : List of units in each layer
+# Input : Vector of units in each layer
 # Returns: Initial weights and biases matrices for all layers
 initializeDeepModel <- function(layerDimensions){
   set.seed(2)
@@ -165,10 +157,10 @@ initializeDeepModel <- function(layerDimensions){
 
 
 # Compute the activation at a layer 'l' for forward prop in a Deep Network
-# Input : A_prec - Activation of previous layer
+# Input : A_prev - Activation of previous layer
 #         W,b - Weight and bias matrices and vectors
 #         activationFunc - Activation function - sigmoid, tanh, relu etc
-# Returns : The Activation of this layer
+# Returns : forward_cache,activation_cache,cache
 #         : 
 # Z = W * X + b
 # A = sigmoid(Z), A= Relu(Z), A= tanh(Z)
@@ -198,12 +190,12 @@ layerActivationForward <- function(A_prev, W, b, activationFunc){
 
 # Compute the forward propagation for layers 1..L
 # Input : X - Input Features
-#         paramaters: Weights and biases
-#         hiddenActivationFunc - elu/sigmoid/tanh
+#         parameters: Weights and biases
+#         hiddenActivationFunc - relu/sigmoid/tanh
 #         outputActivationFunc - Activation function at hidden layer sigmoid/softmax
 # Returns : AL 
 #           caches
-# The forward propoagtion uses the Relu/tanh activation from layer 1..L-1 and sigmoid actiovation at layer L
+# The forward propagtion uses the Relu/tanh activation from layer 1..L-1 and sigmoid actiovation at layer L
 forwardPropagationDeep <- function(X, parameters,hiddenActivationFunc='relu',
                                            outputActivationFunc='sigmoid'){
   caches <- list()
@@ -244,11 +236,19 @@ forwardPropagationDeep <- function(X, parameters,hiddenActivationFunc='relu',
   
 }
 
+# Function pickColumns(). This function is in computeCost()
+# Pick columns
+# Input : AL
+#       : Y
+#       : numClasses
+# Output: a
 pickColumns <- function(AL,Y,numClasses){
     if(numClasses==3){
+        # Select the elements where the y values are 0, 1 or 2 and make a vector
         a=c(AL[Y==0,1],AL[Y==1,2],AL[Y==2,3])
     }
     else if (numClasses==10){
+        # Select the elements where the y values are 0,1,2..,9
         a=c(AL[Y==0,1],AL[Y==1,2],AL[Y==2,3],AL[Y==3,4],AL[Y==4,5],
             AL[Y==5,6],AL[Y==6,7],AL[Y==7,8],AL[Y==8,9],AL[Y==9,10])
     }
@@ -257,9 +257,9 @@ pickColumns <- function(AL,Y,numClasses){
 
 
 # Compute the cost
-# Input : Activation of last layer
-#       : Output from data
-#       :outputActivationFunc - Activation function at hidden layer sigmoid/softmax
+# Input : AL
+#       : Y
+#       : outputActivationFunc - Activation function at hidden layer sigmoid/softmax
 #       : numClasses
 # Output: cost
 computeCost <- function(AL,Y,outputActivationFunc="sigmoid",numClasses=3){
@@ -267,12 +267,9 @@ computeCost <- function(AL,Y,outputActivationFunc="sigmoid",numClasses=3){
     m= length(Y)
     cost=-1/m*sum(Y*log(AL) + (1-Y)*log(1-AL))
   }else if (outputActivationFunc=="softmax"){
-    # Select the elements where the y values are 0, 1 or 2 and make a vector
     # Pick columns
-    #a=c(AL[Y==0,1],AL[Y==1,2],AL[Y==2,3])
     m= length(Y)
     a =pickColumns(AL,Y,numClasses)
-    #a = c(A2[y=k,k+1])
     # Take log
     correct_probs = -log(a)
     # Compute loss
@@ -286,11 +283,10 @@ computeCost <- function(AL,Y,outputActivationFunc="sigmoid",numClasses=3){
 # Compute the backpropagation through a layer
 # Input : Neural Network parameters - dA
 #       # cache - forward_cache & activation_cache
-#       # Input features
 #       # Output values Y
 #       # activationFunc
 #       # numClasses
-# Returns: Gradients
+# Returns: Gradients - dA_prev, dW,db
 # dL/dWi= dL/dZi*Al-1
 # dl/dbl = dL/dZl
 # dL/dZ_prev=dL/dZl*W
@@ -312,7 +308,7 @@ layerActivationBackward  <- function(dA, cache, Y, activationFunc,numClasses){
   } else if(activationFunc == "softmax"){
     dZ <- softmaxDerivative(dA,  activation_cache,Y,numtraining,numClasses)
   }
-  
+  # Check if softmax
   if (activationFunc == 'softmax'){
     W <- forward_cache[['W']]
     b <- forward_cache[['b']]
@@ -323,7 +319,6 @@ layerActivationBackward  <- function(dA, cache, Y, activationFunc,numClasses){
     W <- forward_cache[['W']]
     b <- forward_cache[['b']]
     numtraining = dim(A_prev)[2]
-    
     dW = 1/numtraining * dZ %*% t(A_prev)
     db = 1/numtraining * rowSums(dZ)
     dA_prev = t(W) %*% dZ
@@ -341,11 +336,12 @@ layerActivationBackward  <- function(dA, cache, Y, activationFunc,numClasses){
 #       #the cache of layerActivationForward() with "sigmoid" (it's caches[L-1])
 #       hiddenActivationFunc - Activation function at hidden layers - relu/tanh/sigmoid
 #       outputActivationFunc - Activation function at hidden layer sigmoid/softmax
-#    
+#       numClasses
 #   Returns:
-#    gradients -- A dictionary with the gradients
-#                 gradients["dA" + str(l)] = ... 
-#      
+#    gradients -- listwith the gradients
+#                 gradients["dA" + str(l)]  
+#                 gradients["dW" + str(l)]
+#                 gradients["db" + str(l)]
 backwardPropagationDeep <- function(AL, Y, caches,hiddenActivationFunc='relu',
                                 outputActivationFunc="sigmoid",numClasses){
   #initialize the gradients
@@ -396,8 +392,6 @@ backwardPropagationDeep <- function(AL, Y, caches,hiddenActivationFunc='relu',
     gradients[[paste("db",l,sep="")]] <- retvals[['db']]
   }
   
-  
-  
   return(gradients)
 }
 
@@ -407,7 +401,7 @@ backwardPropagationDeep <- function(AL, Y, caches,hiddenActivationFunc='relu',
 #       : gradients
 #       : learning rate
 #       : outputActivationFunc - Activation function at hidden layer sigmoid/softmax
-#output : Updated weights after 1 iteration
+# output : parameters
 gradientDescent  <- function(parameters, gradients, learningRate,outputActivationFunc="sigmoid"){
   
   L = length(parameters)/2 # number of layers in the neural network
@@ -439,7 +433,7 @@ gradientDescent  <- function(parameters, gradients, learningRate,outputActivatio
 # Input : X - Input features
 #       : Y output
 #       : layersDimensions - Dimension of layers
-#       : hiddenActivationFunc - Activation function at hidden layer relu /tanh
+#       : hiddenActivationFunc - Activation function at hidden layer relu /tanh/sigmoid
 #       : outputActivationFunc - Activation function at hidden layer sigmoid/softmax
 #       : learning rate
 #       : num of iterations
@@ -493,7 +487,7 @@ L_Layer_DeepModel <- function(X, Y, layersDimensions,
 # Input : X - Input features
 #       : Y output
 #       : layersDimensions - Dimension of layers
-#       : hiddenActivationFunc - Activation function at hidden layer relu /tanh
+#       : hiddenActivationFunc - Activation function at hidden layer relu /tanh/sigmoid
 #       : outputActivationFunc - Activation function at hidden layer sigmoid/softmax
 #       : learning rate
 #       : mini_batch_size
@@ -556,6 +550,7 @@ L_Layer_DeepModel_SGD <- function(X, Y, layersDimensions,
 # Predict the output for given input
 # Input : parameters
 #       : X
+#       : hiddenActivationFunc
 # Output: predictions  
 predict <- function(parameters, X,hiddenActivationFunc='relu'){
   
@@ -622,7 +617,12 @@ computeScores <- function(parameters, X,hiddenActivationFunc='relu'){
   return (scores)
 }
 
-
+# Create random mini batches
+# Input : X - Input features
+#       : Y- output
+#       : miniBatchSize
+#       : seed
+#output : mini_batches
 random_mini_batches <- function(X, Y, miniBatchSize = 64, seed = 0){
     
    
@@ -652,7 +652,6 @@ random_mini_batches <- function(X, Y, miniBatchSize = 64, seed = 0){
         mini_batch = list("mini_batch_X"=mini_batch_X,"mini_batch_Y"=mini_batch_Y)
         mini_batches[[batch]] =mini_batch
         
-    
     }
 
     # If the batch size does not divide evenly with mini batc size

@@ -1,12 +1,15 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sun Jan 14 19:10:25 2018
-
+############################################################################################################
+#
+# File: DLfunctions41.py
+# Developer: Tinniam V Ganesh
+# Date : 23 Mar 2018
+#
+##########################################################################################################
 @author: Ganesh
 """
-######################################################
-# DL functions
-######################################################
+
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
@@ -41,7 +44,7 @@ def softmax(Z):
     cache=Z
     return A,cache
 
-# Conmpute the softmax of a vector
+# Conmpute the Stable Softmax of a vector
 def stableSoftmax(Z):  
     #Compute the softmax of vector x in a numerically stable way.
     shiftZ = Z.T - np.max(Z.T,axis=1).reshape(-1,1)
@@ -52,7 +55,7 @@ def stableSoftmax(Z):
     cache=Z
     return A,cache
 
-# Compute the detivative of Relu 
+# Compute the derivative of Relu 
 def reluDerivative(dA, cache):
   
     Z = cache
@@ -61,7 +64,7 @@ def reluDerivative(dA, cache):
     dZ[Z <= 0] = 0 
     return dZ
 
-# Compute the derivative of sigmoid
+# Compute the derivative of Sigmoid
 def sigmoidDerivative(dA, cache):
     Z = cache  
     s = 1/(1+np.exp(-Z))
@@ -75,7 +78,7 @@ def tanhDerivative(dA, cache):
     dZ = dA * (1 - np.power(a, 2))  
     return dZ
 
-# Compute the derivative of softmax
+# Compute the derivative of Softmax
 def softmaxDerivative(dA, cache,y,numTraining):
       # Note : dA not used. dL/dZ = dL/dA * dA/dZ = pi-yi
       Z = cache 
@@ -91,7 +94,7 @@ def softmaxDerivative(dA, cache,y,numTraining):
       dZ[range(int(numTraining)),y[:,0]] -= 1
       return(dZ)
 
-# Compute the derivative of softmax
+# Compute the derivative of Stable Softmax
 def stableSoftmaxDerivative(dA, cache,y,numTraining):
       # Note : dA not used. dL/dZ = dL/dA * dA/dZ = pi-yi
       Z = cache 
@@ -113,7 +116,7 @@ def stableSoftmaxDerivative(dA, cache,y,numTraining):
 # Input : number of features
 #         number of hidden units
 #         number of units in output
-# Returns: Weight and bias matrices and vectors
+# Returns: nnParameters dict
 def initializeModel(numFeats,numHidden,numOutput):
     np.random.seed(1)
     W1=np.random.randn(numHidden,numFeats)*0.01 #  Multiply by .01 
@@ -128,7 +131,7 @@ def initializeModel(numFeats,numHidden,numOutput):
 
 # Initialize model for L layers
 # Input : List of units in each layer
-# Returns: Initial weights and biases matrices for all layers
+# Returns: Z, cache
 def initializeDeepModel(layerDimensions):
     np.random.seed(3)
     # note the Weight matrix at layer 'l' is a matrix of size (l,l-1)
@@ -144,10 +147,10 @@ def initializeDeepModel(layerDimensions):
 return Z, cache
 
 # Compute the activation at a layer 'l' for forward prop in a Deep Network
-# Input : A_prec - Activation of previous layer
+# Input : A_prev - Activation of previous layer
 #         W,b - Weight and bias matrices and vectors
 #         activationFunc - Activation function - sigmoid, tanh, relu etc
-# Returns : The Activation of this layer
+# Returns : A, cache
 #         : 
 # Z = W * X + b
 # A = sigmoid(Z), A= Relu(Z), A= tanh(Z)
@@ -203,9 +206,8 @@ def forwardPropagationDeep(X, parameters,hiddenActivationFunc='relu',outputActiv
 
 
 # Compute the cost
-# Input : Activation of last layer
-#       : Output from data
-#       : Y
+# Input : AL-Activation of last layer
+#       : Y 
 #       :outputActivationFunc - Activation function at output - sigmoid/softmax
 # Output: cost
 def computeCost(AL,Y,outputActivationFunc="sigmoid"):
@@ -216,7 +218,7 @@ def computeCost(AL,Y,outputActivationFunc="sigmoid"):
         cost=-1/m *np.sum(Y*np.log(AL) + (1-Y)*(np.log(1-AL)))
         cost = np.squeeze(cost) 
     elif outputActivationFunc=="softmax":
-        # Take transpose of Y for softmax
+        # Note:Take transpose of Y for softmax
         Y=Y.T
         m= float(len(Y))
         # Compute log probs. Take the log prob of correct class based on output y
@@ -228,9 +230,9 @@ def computeCost(AL,Y,outputActivationFunc="sigmoid"):
 # Compute the backpropoagation for 1 cycle
 # Input : Neural Network parameters - dA
 #       # cache - forward_cache & activation_cache
-#       # Input features
-#       # Output values Y
-# Returns: Gradients
+#       # Y
+#       # activationFunc # relu, tanh, sigmoid,softmax
+# Returns: dA_prev, dW, db
 # dL/dWi= dL/dZi*Al-1
 # dl/dbl = dL/dZl
 # dL/dZ_prev=dL/dZl*W
@@ -272,13 +274,13 @@ def layerActivationBackward(dA, cache, Y, activationFunc):
 #       #(it's caches[l], for l in range(L-1) i.e l = 0...L-2)
 #       #the cache of layerActivationForward() with "sigmoid" (it's caches[L-1])
 #       hiddenActivationFunc - Activation function at hidden layers - relu/sigmoid/tanh
-#       #         outputActivationFunc - Activation function at output - sigmoid/softmax
+#       outputActivationFunc - Activation function at output - sigmoid/softmax
 #    
 #   Returns:
 #    gradients -- A dictionary with the gradients
 #                 gradients["dA" + str(l)] = ... 
 #                 gradients["dW" + str(l)] = ...
-
+#                  gradients["db" + str(l)]
 def backwardPropagationDeep(AL, Y, caches,hiddenActivationFunc='relu',outputActivationFunc="sigmoid"):
     #initialize the gradients
     gradients = {}
@@ -326,7 +328,7 @@ def backwardPropagationDeep(AL, Y, caches,hiddenActivationFunc='relu',outputActi
 #       : gradients
 #       : learning rate
 #       : outputActivationFunc - Activation function at output - sigmoid/softmax
-#output : Updated weights after 1 iteration
+#return : parameters
 def gradientDescent(parameters, gradients, learningRate,outputActivationFunc="sigmoid"):
     
     L = int(len(parameters) / 2)
@@ -346,19 +348,15 @@ def gradientDescent(parameters, gradients, learningRate,outputActivationFunc="si
     
     return parameters
 
-
-
-
-
 #  Execute a L layer Deep learning model
-# Input : X - Input features
-#       : Y output
+# Input : X1 - Input features
+#       : Y1 output
 #       : layersDimensions - Dimension of layers
 #       : hiddenActivationFunc - Activation function at hidden layer relu /tanh/sigmoid
+#       : outputActivationFunc - sigmoid/softmax
 #       : learning rate
 #       : num of iteration
-#       : outputActivationFunc - Activation function at output - sigmoid/softmax
-#output : Updated weights after 1 iteration
+# output : parameters
     
 def L_Layer_DeepModel(X1, Y1, layersDimensions, hiddenActivationFunc='relu', outputActivationFunc="sigmoid", learningRate = .3, num_iterations = 10000, print_cost=False):#lr was 0.009
 
@@ -411,15 +409,15 @@ def L_Layer_DeepModel(X1, Y1, layersDimensions, hiddenActivationFunc='relu', out
     return parameters
 
 #  Execute a L layer Deep learning model Stoachastic Gradient Descent
-# Input : X - Input features
-#       : Y output
+# Input : X1 - Input features
+#       : Y1- output
 #       : layersDimensions - Dimension of layers
 #       : hiddenActivationFunc - Activation function at hidden layer relu /tanh/sigmoid
-#       : learning rate
-#       : num of iteration
 #       : outputActivationFunc - Activation function at output - sigmoid/softmax
-#output : Updated weights after 1 iteration
-
+#       : learning rate
+#       : mini_batch_size
+#       : num_epochs
+#output : parameters
 def L_Layer_DeepModel_SGD(X1, Y1, layersDimensions, hiddenActivationFunc='relu', outputActivationFunc="sigmoid",learningRate = .3, mini_batch_size = 64, num_epochs = 2500, print_cost=False):#lr was 0.009
 
     np.random.seed(1)
@@ -472,6 +470,11 @@ def L_Layer_DeepModel_SGD(X1, Y1, layersDimensions, hiddenActivationFunc='relu',
 
 
 # Create random mini batches
+# Input : X - Input features
+#       : Y- output
+#       : miniBatchSizes
+#       : seed
+#output : mini_batches
 def random_mini_batches(X, Y, miniBatchSize = 64, seed = 0):
     
     np.random.seed(seed)    
@@ -517,7 +520,6 @@ def random_mini_batches(X, Y, miniBatchSize = 64, seed = 0):
 # Input : Input Model,
 #         X
 #         Y
-#         sz - Num of hiden units
 #         lr - Learning rate
 #         Fig to be saved as
 # Returns Null

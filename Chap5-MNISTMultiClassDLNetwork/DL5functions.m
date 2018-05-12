@@ -1,3 +1,10 @@
+############################################################################################################
+#
+# File: DLfunctions5.m
+# Developer: Tinniam V Ganesh
+# Date : 23 Mar 2018
+#
+##########################################################################################################
 1;
 # Define sigmoid function
 function [A,cache] = sigmoid(Z)
@@ -26,7 +33,7 @@ function [A,cache] = softmax(Z)
     cache=Z;
 end
 
-# Define Softmax function
+# Define Stable Softmax function
 function [A,cache] = stableSoftmax(Z)
     # Normalize by max value in each row
     shiftZ = Z' - max(Z',[],2);
@@ -64,6 +71,7 @@ end
 
 # Populate a matrix with 1s in rows where Y=1
 # This function may need to be modified if K is not 3, 10
+# This function is used in computing the softmax derivative
 function [Y1] = popMatrix(Y,numClasses)
     Y1=zeros(length(Y),numClasses);
     if(numClasses==3) # For 3 output classes
@@ -100,7 +108,7 @@ function [dZ] = softmaxDerivative(dA,cache,Y, numClasses)
   
 end
 
-# Define Softmax Derivative 
+# Define Stable Softmax Derivative 
 function [dZ] = stableSoftmaxDerivative(dA,cache,Y, numClasses)
   Z = cache;
   # get unnormalized probabilities
@@ -112,13 +120,6 @@ function [dZ] = stableSoftmaxDerivative(dA,cache,Y, numClasses)
   dZ=probs-yi;
 
 end
-
-# Initialize the model 
-# Input : number of features
-#         number of hidden units
-#         number of units in output
-# Returns: Weight and bias matrices and vectors
-
 
 # Initialize model for L layers
 # Input : List of units in each layer
@@ -139,10 +140,10 @@ function [W b] = initializeDeepModel(layerDimensions)
 end
 
 # Compute the activation at a layer 'l' for forward prop in a Deep Network
-# Input : A_prec - Activation of previous layer
+# Input : A_prev - Activation of previous layer
 #         W,b - Weight and bias matrices and vectors
 #         activationFunc - Activation function - sigmoid, tanh, relu etc
-# Returns : The Activation of this layer
+# Returns : A, forward_cache, activation_cache
 #         : 
 # Z = W * X + b
 # A = sigmoid(Z), A= Relu(Z), A= tanh(Z)
@@ -171,8 +172,7 @@ end
 #         paramaters: Weights and biases
 #         hiddenActivationFunc - Activation function at hidden layers Relu/tanh
 #         outputActivationFunc- sigmoid/softmax
-# Returns : AL 
-#           caches
+# Returns : AL, forward_caches, activation_caches 
 # The forward propoagtion uses the Relu/tanh activation from layer 1..L-1 and sigmoid actiovation at layer L
 function [AL forward_caches activation_caches] = forwardPropagationDeep(X, weights,biases, 
                                                hiddenActivationFunc='relu', outputActivationFunc='sigmoid')
@@ -203,6 +203,7 @@ function [AL forward_caches activation_caches] = forwardPropagationDeep(X, weigh
 end
 
 # Pick columns where Y==1
+# This function is used in computeCost
 function [a] = pickColumns(AL,Y,numClasses)
     if(numClasses==3)
         a=[AL(Y==0,1) ;AL(Y==1,2) ;AL(Y==2,3)];
@@ -214,9 +215,9 @@ end
 
 
 # Compute the cost
-# Input : Activation of last layer
-#       : Output from data
-#       :  outputActivationFunc- sigmoid/softmax
+# Input : AL
+#       : Y
+#       : outputActivationFunc- sigmoid/softmax
 #       : numClasses 
 # Output: cost
 function [cost]= computeCost(AL, Y, outputActivationFunc="sigmoid",numClasses)
@@ -243,7 +244,7 @@ end
 #       # cache - forward_cache & activation_cache
 #       # Input features
 #       # Output values Y
-#       # outputActivationFunc- sigmoid/softmax
+#       # activationFunc- sigmoid/softmax/tanh
 #       # numClasses
 # Returns: Gradients
 # dL/dWi= dL/dZi*Al-1
@@ -266,7 +267,7 @@ function [dA_prev dW db] = layerActivationBackward(dA, forward_cache, activation
         dZ = stableSoftmaxDerivative(dA, activation_cache,Y,numClasses);
     endif
     
-    
+    # Check if softmax
     if (strcmp(activationFunc,"softmax"))
       W =forward_cache{2};
       b = forward_cache{3};
@@ -291,7 +292,7 @@ end
 #       every cache of layerActivationForward() with "relu"/"tanh"
 #       #(it's caches[l], for l in range(L-1) i.e l = 0...L-2)
 #       #the cache of layerActivationForward() with "sigmoid" (it's caches[L-1])
-#       hiddenActivationFunc - Activation function at hidden layers
+#       # hiddenActivationFunc - Activation function at hidden layers
 #       # outputActivationFunc- sigmoid/softmax
 #       # numClasses
 #    
@@ -299,6 +300,7 @@ end
 #    gradients -- A dictionary with the gradients
 #                 gradients["dA" + str(l)] = ... 
 #                 gradients["dW" + str(l)] = ...
+#                 gradients["db" + str(l)] = ...
 
 function [gradsDA gradsDW gradsDB]= backwardPropagationDeep(AL, Y, activation_caches,forward_caches,
                              hiddenActivationFunc='relu',outputActivationFunc="sigmoid",numClasses)
@@ -360,7 +362,7 @@ end
 #       : gradients
 #       : learning rate
 #       : outputActivationFunc
-#output : Updated weights after 1 iteration
+#output : weights, biases
 function [weights biases] = gradientDescent(weights, biases,gradsW,gradsB, learningRate,outputActivationFunc="sigmoid")
 
     L = size(weights)(2); # number of layers in the neural network
@@ -481,7 +483,7 @@ function [weights biases costs] = L_Layer_DeepModel_SGD(X, Y, layersDimensions, 
     
 end
 
- 
+ # Plot cost vs iterations
  function plotCostVsIterations(maxIterations,costs)
      iterations=[0:1000:maxIterations];
      plot(iterations,costs);
@@ -526,6 +528,7 @@ function plotDecisionBoundary(data,weights, biases,hiddenActivationFunc="relu")
 
 end
 
+# Compute scores
 function [AL]= scores(weights, biases, X,hiddenActivationFunc="relu")
     [AL forward_caches activation_caches] = forwardPropagationDeep(X, weights, biases,hiddenActivationFunc);
 end 
@@ -533,6 +536,7 @@ end
 # Create Random mini batches. Return cell arrays with the mini batches
 # Input : X, Y
 #       : Size of minibatch
+#       : seed
 #Output : mini batches X & Y
 function [mini_batches_X  mini_batches_Y]= random_mini_batches(X, Y, miniBatchSize = 64, seed = 0)
     

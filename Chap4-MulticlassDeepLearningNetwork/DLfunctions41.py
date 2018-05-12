@@ -1,7 +1,13 @@
 # -*- coding: utf-8 -*-
 """
 Created on Sun Jan 14 19:10:25 2018
-
+############################################################################################################
+#
+# File: DLfunctions41.py
+# Developer: Tinniam V Ganesh
+# Date : 26 Feb 2018
+#
+##########################################################################################################
 @author: Ganesh
 """
 
@@ -10,8 +16,6 @@ import matplotlib.pyplot as plt
 import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib import cm
-
-
 
 # Conmpute the Relu of a vector
 def relu(Z):
@@ -28,9 +32,8 @@ def softmax(Z):
     cache=Z
     return A,cache
 
-# Compute the detivative of Relu 
-def reluDerivative(dA, cache):
-  
+# Compute the derivative of Relu 
+def reluDerivative(dA, cache):  
     Z = cache
     dZ = np.array(dA, copy=True) # just converting dz to a correct object.  
     # When z <= 0, you should set dz to 0 as well. 
@@ -76,7 +79,7 @@ def initializeModel(numFeats,numHidden,numOutput):
 # Input : A_prec - Activation of previous layer
 #         W,b - Weight and bias matrices and vectors
 #         activationFunc - Activation function - sigmoid, tanh, relu etc
-# Returns : The Activation of this layer
+# Returns : A, cache
 #         : 
 # Z = W * X + b
 # A = sigmoid(Z), A= Relu(Z), A= tanh(Z)
@@ -94,19 +97,18 @@ def layerActivationForward(A_prev, W, b, activationFunc):
     # Compute the activation for tanh
     elif activationFunc == 'tanh':
         A, activation_cache = tanh(Z)  
+    # Compute the activation for softmax
     elif activationFunc == 'softmax':
         A, activation_cache = softmax(Z)  
     cache = (forward_cache, activation_cache)
     return A, cache
 
-
-
 # Compute the backpropoagation for 1 cycle
 # Input : Neural Network parameters - dA
 #       # cache - forward_cache & activation_cache
-#       # Input features
-#       # Output values Y
-# Returns: Gradients
+#       # y
+#       # activationFunc
+# Returns: dA_prev, dW, db
 # dL/dWi= dL/dZi*Al-1
 # dl/dbl = dL/dZl
 # dL/dZ_prev=dL/dZl*W
@@ -133,8 +135,7 @@ def layerActivationBackward(dA, cache, y, activationFunc):
         #print("dW=",dW)
         db = 1/numtraining * np.sum(dZ, axis=1, keepdims=True)
         #print("db=",db)
-        dA_prev = np.dot(W.T,dZ)
-        
+        dA_prev = np.dot(W.T,dZ)       
     return dA_prev, dW, db
 
 
@@ -142,9 +143,10 @@ def layerActivationBackward(dA, cache, y, activationFunc):
 # Input : Input Model,
 #         X
 #         Y
-#         sz - Num of hiden units
-#         lr - Learning rate
-#         Fig to be saved as
+#         W1
+#         b1
+#         W2
+#         fig
 # Returns Null
 def plot_decision_boundary(X, y,W1,b1,W2,b2,fig1):
     #plot_decision_boundary(lambda x: predict(parameters, x.T), x1,y1.T,str(0.3),"fig2.png") 

@@ -1,6 +1,12 @@
+############################################################################################################
+#
+# File: DLfunctions41.R
+# Developer: Tinniam V Ganesh
+# Date : 26 Feb 2018
+#
+##########################################################################################################
 
-
-# Conmpute the Relu of a vector
+# Compute the Relu of a vector
 relu   <-function(Z){
     A <- apply(Z, 1:2, function(x) max(0,x))
     cache<-Z
@@ -8,9 +14,7 @@ relu   <-function(Z){
     return(retvals)
 }
 
-
-
-# Conmpute the softmax of a vector
+# Compute the softmax of a vector
 softmax   <- function(Z){
     # get unnormalized probabilities
     exp_scores = exp(t(Z))
@@ -31,7 +35,7 @@ reluDerivative   <-function(dA, cache){
     return(dZ)
 }
 
-
+# Compute the detivative of softmax
 softmaxDerivative    <- function(dA, cache ,y,numTraining){
     # Note : dA not used. dL/dZ = dL/dA * dA/dZ = pi-yi
     Z <- cache 
@@ -58,7 +62,7 @@ softmaxDerivative    <- function(dA, cache ,y,numTraining){
 # Input : number of features
 #         number of hidden units
 #         number of units in output
-# Returns: Weight and bias matrices and vectors
+# Returns: list of Weight and bias matrices and vectors
 initializeModel <- function(numFeats,numHidden,numOutput){
     set.seed(2)
     a<-rnorm(numHidden*numFeats)*0.01 #  Multiply by .01 
@@ -73,16 +77,11 @@ initializeModel <- function(numFeats,numHidden,numOutput){
     return(parameters)
     
 }
-
-
-
-
 # Compute the activation at a layer 'l' for forward prop in a Deep Network
-# Input : A_prec - Activation of previous layer
+# Input : A_prev - Activation of previous layer
 #         W,b - Weight and bias matrices and vectors
 #         activationFunc - Activation function - sigmoid, tanh, relu etc
-# Returns : The Activation of this layer
-#         : 
+# Returns : A list of  forward_cache, activation_cache, cache     
 # Z = W * X + b
 # A = sigmoid(Z), A= Relu(Z), A= tanh(Z)
 layerActivationForward <- function(A_prev, W, b, activationFunc){
@@ -110,12 +109,12 @@ layerActivationForward <- function(A_prev, W, b, activationFunc){
 
 
 
-# Compute the backpropoagation for 1 cycle
+# Compute the backpropagation for 1 cycle
 # Input : Neural Network parameters - dA
 #       # cache - forward_cache & activation_cache
-#       # Input features
-#       # Output values Y
-# Returns: Gradients
+#       # y
+#       # activationFunc
+# Returns: Gradients - a list of dA_prev, dW, db
 # dL/dWi= dL/dZi*Al-1
 # dl/dbl = dL/dZl
 # dL/dZ_prev=dL/dZl*W
@@ -136,7 +135,8 @@ layerActivationBackward  <- function(dA, cache, y, activationFunc){
     } else if(activationFunc == "softmax"){
         dZ <- softmaxDerivative(dA,  activation_cache,y,numtraining)
     }
-    #print(dZ)
+    
+    # Check if softmax
     if (activationFunc == 'softmax'){
         W <- forward_cache[['W']]
         b <- forward_cache[['b']]
@@ -158,7 +158,7 @@ layerActivationBackward  <- function(dA, cache, y, activationFunc){
 
 
 
-# Plot a decision boundary
+# Plot a decision boundary for Softmax output activation
 # This function uses ggplot2
 plotDecisionBoundary <- function(Z,W1,b1,W2,b2){
     xmin<-min(Z[,1])
@@ -189,11 +189,7 @@ plotDecisionBoundary <- function(Z,W1,b1,W2,b2){
     
     # From the  softmax probabilities pick the one with the highest probability
     q= apply(A2,1,which.max)
-    
-    
-    ###
-    
-    
+
     q1 <- t(data.frame(q))
     q2 <- as.numeric(q1)
     grid2 <- cbind(grid,q2)

@@ -1,3 +1,10 @@
+############################################################################################################
+#
+# File: DLfunctions41.m
+# Developer: Tinniam V Ganesh
+# Date : 26 Feb 2018
+#
+##########################################################################################################
 1;
 
 # Define Relu function
@@ -63,11 +70,10 @@ function [W1 b1 W2 b2] = initializeModel(numFeats,numHidden,numOutput)
 
 
 # Compute the activation at a layer 'l' for forward prop in a Deep Network
-# Input : A_prec - Activation of previous layer
+# Input : A_prev - Activation of previous layer
 #         W,b - Weight and bias matrices and vectors
 #         activationFunc - Activation function - sigmoid, tanh, relu etc
-# Returns : The Activation of this layer
-#         : 
+# Returns : A, forward_cache, activation_cache
 # Z = W * X + b
 # A = sigmoid(Z), A= Relu(Z), A= tanh(Z)
 function [A forward_cache activation_cache] = layerActivationForward(A_prev, W, b, activationFunc)
@@ -97,7 +103,7 @@ end
 #       # cache - forward_cache & activation_cache
 #       # Input features
 #       # Output values Y
-# Returns: Gradients
+# Returns: dA_prev, dW, db
 # dL/dWi= dL/dZi*Al-1
 # dl/dbl = dL/dZl
 # dL/dZ_prev=dL/dZl*W
@@ -115,6 +121,7 @@ function [dA_prev dW db] =  layerActivationBackward(dA, forward_cache, activatio
     A_prev = forward_cache{1};  
     numTraining = size(A_prev)(2); 
     
+    # If activation is softmax
     if(strcmp(activationFunc, "softmax"))
       W =forward_cache{2};
       b = forward_cache{3};
@@ -130,7 +137,7 @@ function [dA_prev dW db] =  layerActivationBackward(dA, forward_cache, activatio
      endif   
 end 
 
- 
+ # Plot cost vs iterations
  function plotCostVsIterations(iterations,costs)
      
      plot(iterations,costs);
@@ -140,6 +147,7 @@ end
      print -dpng "figo2.png"
 end;
 
+# Plot softmax decision boundary
 function plotDecisionBoundary( X,Y,W1,b1,W2,b2)
     % Make classification predictions over a grid of values
     x1plot = linspace(min(X(:,1)), max(X(:,1)), 400)';

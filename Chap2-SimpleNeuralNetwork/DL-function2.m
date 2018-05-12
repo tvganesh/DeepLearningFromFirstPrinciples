@@ -1,3 +1,10 @@
+##############################################################################################
+#
+# Created by: Tinniam V Ganesh
+# Date : 11 Jan 2018
+# File: DLfunctions2.m
+#
+##############################################################################################
 1;
 # Define sigmoid function
 function a = sigmoid(z)
@@ -5,11 +12,18 @@ function a = sigmoid(z)
 end
 
 # Compute the loss
+# Inputs: numTraining
+#       : Y
+#       : A
+# Ouputs : loss
 function loss=computeLoss(numtraining,Y,A)
   loss = -1/numtraining * sum((Y .* log(A)) + (1-Y) .* log(1-A));
 end
   
 # Compute the model shape given the dataset
+# Inputs: X
+#       : Y
+# Ouputs : n_x,m,n_h,n_y
 function [n_x,m,n_h,n_y] = getModelShape(X,Y)
     m= size(X)(2);
     n_x=size(X)(1);
@@ -17,6 +31,11 @@ function [n_x,m,n_h,n_y] = getModelShape(X,Y)
     n_y=size(Y)(1);
 end
 
+# Initialize model
+# Inputs: n_x
+#       : n_h
+#       : n_y
+# Ouputs : W1,b1,W2,b2
 function [W1,b1,W2,b2] = modelInit(n_x,n_h,n_y)
     rand ("seed", 2);
     W1=rand(n_h,n_x)*0.01; # Set the initial values to a small number
@@ -137,6 +156,7 @@ function [W1,b1,W2,b2,costs]= computeNN(X, Y,numHidden, learningRate, numIterati
 # Compute the predicted value for a given input
 # Input : Neural Network parameters
 #       : Input data
+# Output : predictions
 function [predictions]= predict(W1,b1,W2,b2, X)
     [Z1,A1,Z2,A2] = forwardPropagation(X, W1,b1,W2,b2);
     predictions = (A2>0.5);

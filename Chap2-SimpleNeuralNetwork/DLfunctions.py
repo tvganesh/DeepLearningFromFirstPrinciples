@@ -1,19 +1,26 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Mon Jan 01 15:29:03 2018
-
-@author: Ganesh
-"""
+##############################################################################################
+#
+# Created by: Tinniam V Ganesh
+# Date : 11 Jan 2018
+# File: DLfunctions.py
+#
+##############################################################################################
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 
 # Conmpute the sigmoid of a vector
+# Inputs: z
+# Ouputs : a
 def sigmoid(z):  
     a=1/(1+np.exp(-z))    
     return a
 
 # Compute the model shape given the dataset
+# Input : X
+#         Y
+# Returns: modelParams
 def getModelShape(X,Y):
     numTraining= X.shape[1] # No of training examples
     numFeats=X.shape[0]     # No of input features
@@ -41,11 +48,10 @@ def initializeModel(numFeats,numHidden,numOutput):
     return(nnParameters)
 
 # Compute the forward propoagation through the neural network
-# Input : Features
-#         Weight and bias matrices and vectors
+# Input : X
+#         nnParameters
 # Returns : The Activation of 2nd layer
 #         : Output and activation of layer 1 & 2
-
 def forwardPropagation(X,nnParameters):
     # Get the parameters
     W1=nnParameters["W1"]
@@ -68,8 +74,8 @@ def forwardPropagation(X,nnParameters):
     return A2,cache
 
 # Compute the cost
-# Input : Activation of 2nd layer
-#       : Output from data
+# Input : A2
+#       :Y
 # Output: cost
 def computeCost(A2,Y):
     m= float(Y.shape[1])

@@ -27,19 +27,18 @@ def initialize(dim):
 # Compute the loss
 # Inputs: numTraining
 #       : Y
-#       :A
+#       : A
 # Ouputs : loss
 def computeLoss(numTraining,Y,A):
     loss=-1/numTraining *np.sum(Y*np.log(A) + (1-Y)*(np.log(1-A)))
     return(loss)
 
 # Execute the forward propagation
-# Compute the loss
 # Inputs: w
 #       : b
 #       : X
 #       : Y
-# Ouputs : gradients, loss
+# Ouputs : gradients, loss (dict)
 def forwardPropagation(w,b,X,Y):
     # Compute Z
     Z=np.dot(w.T,X)+b
@@ -67,7 +66,7 @@ def forwardPropagation(w,b,X,Y):
 #       : Y
 #       : numIerations
 #       : learningRate
-# Ouputs : params, grads, losses,idx
+# Ouputs : params, grads, losses,idx 
 def gradientDescent(w, b, X, Y, numIerations, learningRate):
     losses=[]
     idx =[]

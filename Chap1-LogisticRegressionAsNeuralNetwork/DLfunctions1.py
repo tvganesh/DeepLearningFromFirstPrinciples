@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
-"""
-Created by: Tinniam V Ganesh
-Date : 4 Jan 2018
-File: DLfunctions1.py
-"""
+##############################################################################################
+#
+# Created by: Tinniam V Ganesh
+# Date : 4 Jan 2018
+# File: DLfunctions1.py
+#
+##############################################################################################
 
 import numpy as np
 import pandas as pd

@@ -1,17 +1,35 @@
+##################################################################################
+#
+# Created by: Tinniam V Ganesh
+# Date : 4 Jan 2018
+# File: DLfunctions1.py
+#
+##################################################################################
 source("RFunctions-1.R")
+
 # Define the sigmoid function
 sigmoid <- function(z){
     a <- 1/(1+ exp(-z))
     a
 }
 
+
 # Compute the loss
+# Inputs: numTraining
+#       : Y
+#       : A
+# Ouputs : loss
 computeLoss <- function(numTraining,Y,A){
     loss <- -1/numTraining* sum(Y*log(A) + (1-Y)*log(1-A))
     return(loss)
 }
 
 # Compute forward propagation
+# Inputs: w
+#       : b
+#       : X
+#       : Y
+# Ouputs : fwdProp (list)
 forwardPropagation <- function(w,b,X,Y){
     # Compute Z
     Z <- t(w) %*% X +b
@@ -33,6 +51,14 @@ forwardPropagation <- function(w,b,X,Y){
 }
 
 # Perform one cycle of Gradient descent
+# Compute Gradient Descent    
+# Inputs: w
+#       : b
+#       : X
+#       : Y
+#       : numIerations
+#       : learningRate
+# Ouputs : gradDescnt (list)
 gradientDescent <- function(w, b, X, Y, numIerations, learningRate){
     losses <- NULL
     idx <- NULL
@@ -55,12 +81,15 @@ gradientDescent <- function(w, b, X, Y, numIerations, learningRate){
     
     # Return the weights and losses
     gradDescnt <- list("w"=w,"b"=b,"dw"=dw,"db"=db,"losses"=losses,"idx"=idx)
-    
-    
     return(gradDescnt)
 }
 
-# COmpute the predicted value for input
+# Compute the predicted value for input
+# Predict the output for a training set 
+# Inputs: w
+#       : b
+#       : X
+# Ouputs : yPredicted
 predict <- function(w,b,X){
     m=dim(X)[2]
     # Create a ector of 0's
@@ -81,6 +110,9 @@ predict <- function(w,b,X){
 }
 
 # Normalize the matrix
+# Predict the output for a training set 
+# Inputs: x
+# Ouputs : normalized
 normalize <- function(x){
     #Create the norm of the matrix.Perform the Frobenius norm of the matrix 
     n<-as.matrix(sqrt(rowSums(x^2)))

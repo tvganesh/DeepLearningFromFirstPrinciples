@@ -1,14 +1,32 @@
+##############################################################################################
+#
+# Created by: Tinniam V Ganesh
+# Date : 4 Jan 2018
+# File: DLfunctions1.py
+#
+##############################################################################################
 1;
 # Define sigmoid function
 function a = sigmoid(z)
   a = 1 ./ (1+ exp(-z));
 end
+
 # Compute the loss
+# Compute the loss
+# Inputs: numTraining
+#       : Y
+#       : A
+# Ouputs : loss
 function loss=computeLoss(numtraining,Y,A)
   loss = -1/numtraining * sum((Y .* log(A)) + (1-Y) .* log(1-A));
 end
 
 # Perform forward propagation
+# Inputs: w
+#       : b
+#       : X
+#       : Y
+# Ouputs : loss,dw,db,dZ
 function [loss,dw,db,dZ] = forwardPropagation(w,b,X,Y)
   % Compute Z
   Z = w' * X + b;
@@ -26,6 +44,13 @@ function [loss,dw,db,dZ] = forwardPropagation(w,b,X,Y)
 end
 
 # Compute Gradient Descent
+# Inputs: w
+#       : b
+#       : X
+#       : Y
+#       : numIerations
+#       : learningRate
+# Ouputs : w,b,dw,db,losses,index 
 function [w,b,dw,db,losses,index]=gradientDescent(w, b, X, Y, numIerations, learningRate)
   #Initialize losses and idx
   losses=[];
@@ -46,6 +71,10 @@ function [w,b,dw,db,losses,index]=gradientDescent(w, b, X, Y, numIerations, lear
 end
 
 # Determine the predicted value for dataset
+# Inputs: w
+#       : b
+#       : X
+# Ouputs : yPredicted
 function yPredicted = predict(w,b,X)
    m = size(X)(1,2);
    yPredicted=zeros(1,m);
@@ -64,6 +93,9 @@ function yPredicted = predict(w,b,X)
 end
 
 # Normalize by dividing each value by the sum of squares
+# Predict the output for a training set 
+# Inputs: x
+# Ouputs : normalized
 function normalized = normalize(x)
     # Compute Frobenius norm. Square the elements, sum rows and then find square root
     a = sqrt(sum(x .^ 2,2));
@@ -72,6 +104,10 @@ function normalized = normalize(x)
 end
 
 # Split into train and test sets
+# Predict the output for a training set 
+# Inputs: dataset
+#       :trainPercent
+# Ouputs : X_train,y_train,X_test,y_test
 function [X_train,y_train,X_test,y_test] = trainTestSplit(dataset,trainPercent)   
      # Create a random index
      ix = randperm(length(dataset));

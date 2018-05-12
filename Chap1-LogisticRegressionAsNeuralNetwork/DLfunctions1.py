@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Created on Tue May  8 19:32:14 2018
-
-@author: Ganesh
+Created by: Tinniam V Ganesh
+Date : 4 Jan 2018
+File: DLfunctions1.py
 """
 
 import numpy as np
@@ -16,18 +16,28 @@ def sigmoid(z):
     a=1/(1+np.exp(-z))    
     return a
 
-# Initialize
+# Initialize weights and biases
 def initialize(dim):
     w = np.zeros(dim).reshape(dim,1)
     b = 0   
     return w
 
 # Compute the loss
+# Inputs: numTraining
+#       : Y
+#       :A
+# Ouputs : loss
 def computeLoss(numTraining,Y,A):
     loss=-1/numTraining *np.sum(Y*np.log(A) + (1-Y)*(np.log(1-A)))
     return(loss)
 
 # Execute the forward propagation
+# Compute the loss
+# Inputs: w
+#       : b
+#       : X
+#       : Y
+# Ouputs : gradients, loss
 def forwardPropagation(w,b,X,Y):
     # Compute Z
     Z=np.dot(w.T,X)+b
@@ -49,6 +59,13 @@ def forwardPropagation(w,b,X,Y):
     return gradients,loss
 
 # Compute Gradient Descent    
+# Inputs: w
+#       : b
+#       : X
+#       : Y
+#       : numIerations
+#       : learningRate
+# Ouputs : params, grads, losses,idx
 def gradientDescent(w, b, X, Y, numIerations, learningRate):
     losses=[]
     idx =[]
@@ -74,6 +91,10 @@ def gradientDescent(w, b, X, Y, numIerations, learningRate):
     return params, grads, losses,idx
 
 # Predict the output for a training set 
+# Inputs: w
+#       : b
+#       : X
+# Ouputs : yPredicted
 def predict(w,b,X):
     size=X.shape[1]
     yPredicted=np.zeros((1,size))
@@ -91,6 +112,9 @@ def predict(w,b,X):
     return yPredicted
 
 #Normalize the data   
+# Predict the output for a training set 
+# Inputs: x
+# Ouputs : x (normalized)
 def normalize(x):
     x_norm = None
     x_norm = np.linalg.norm(x,axis=1,keepdims=True)

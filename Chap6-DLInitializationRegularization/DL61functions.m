@@ -26,7 +26,7 @@ function [A,cache] = softmax(Z)
     cache=Z;
 end
 
-# Define Softmax function
+# Define Stable Softmax function
 function [A,cache] = stableSoftmax(Z)
     # Normalize by max value in each row
     shiftZ = Z' - max(Z',[],2);
@@ -64,6 +64,7 @@ end
 
 # Populate a matrix with 1s in rows where Y=1
 # This function may need to be modified if K is not 3, 10
+# This function is used in computing the softmax derivative
 function [Y1] = popMatrix(Y,numClasses)
     Y1=zeros(length(Y),numClasses);
     if(numClasses==3) # For 3 output classes
@@ -100,7 +101,7 @@ function [dZ] = softmaxDerivative(dA,cache,Y, numClasses)
   
 end
 
-# Define Softmax Derivative 
+# Define Stable Softmax Derivative 
 function [dZ] = stableSoftmaxDerivative(dA,cache,Y, numClasses)
   Z = cache;
   # get unnormalized probabilities
@@ -112,13 +113,6 @@ function [dZ] = stableSoftmaxDerivative(dA,cache,Y, numClasses)
   dZ=probs-yi;
 
 end
-
-# Initialize the model 
-# Input : number of features
-#         number of hidden units
-#         number of units in output
-# Returns: Weight and bias matrices and vectors
-
 
 # Initialize model for L layers
 # Input : List of units in each layer
@@ -138,15 +132,8 @@ function [W b] = initializeDeepModel(layerDimensions)
     endfor
 end
 
-# He Initialization the model 
-# Input : number of features
-#         number of hidden units
-#         number of units in output
-# Returns: Weight and bias matrices and vectors
-
-
 # He Initialization for L layers
-# Input : List of units in each layer
+# Input : vector of units in each layer
 # Returns: Initial weights and biases matrices for all layers
 function [W b] = HeInitializeDeepModel(layerDimensions)
     rand ("seed", 3);
@@ -164,7 +151,7 @@ function [W b] = HeInitializeDeepModel(layerDimensions)
 end
 
 # Xavier Initialization for L layers
-# Input : List of units in each layer
+# Input : vector of units in each layer
 # Returns: Initial weights and biases matrices for all layers
 function [W b] = XavInitializeDeepModel(layerDimensions)
     rand ("seed", 3);
@@ -183,7 +170,7 @@ end
 
 
 # Compute the activation at a layer 'l' for forward prop in a Deep Network
-# Input : A_prec - Activation of previous layer
+# Input : A_prev - Activation of previous layer
 #         W,b - Weight and bias matrices and vectors
 #         activationFunc - Activation function - sigmoid, tanh, relu etc
 # Returns : The Activation of this layer
@@ -213,7 +200,8 @@ end
 # Compute the forward propagation for layers 1..L
 # Input : X - Input Features
 #         paramaters: Weights and biases
-#         hiddenActivationFunc - Activation function at hidden layers Relu/tanh
+#         keep_prob
+#         hiddenActivationFunc - Activation function at hidden layers Relu/tanh/sigmoid
 #         outputActivationFunc- sigmoid/softmax
 # Returns : AL 
 #           caches
@@ -256,6 +244,7 @@ function [AL forward_caches activation_caches dropoutMat] = forwardPropagationDe
 end
 
 # Pick columns where Y==1
+# This function is used in computeCost
 function [a] = pickColumns(AL,Y,numClasses)
     if(numClasses==3)
         a=[AL(Y==0,1) ;AL(Y==1,2) ;AL(Y==2,3)];
@@ -294,13 +283,14 @@ function [cost]= computeCost(AL, Y, outputActivationFunc="sigmoid",numClasses)
 end
 
 # Compute the cost with regularization
-# Input : Activation of last layer
+# Input : weights
+#       : AL - Activation of last layer
 #       : Output from data
-#       :  outputActivationFunc- sigmoid/softmax
+#       : lambd
+#       : outputActivationFunc- sigmoid/softmax
 #       : numClasses 
 # Output: cost
 function [cost]= computeCostWithReg(weights, AL, Y, lambd, outputActivationFunc="sigmoid",numClasses)
-
     if(strcmp(outputActivationFunc,"sigmoid"))
         numTraining= size(Y)(2);
         # Element wise multiply for logprobs
@@ -316,8 +306,6 @@ function [cost]= computeCostWithReg(weights, AL, Y, lambd, outputActivationFunc=
         endfor
         L2RegularizationCost = (lambd/(2*numTraining))*L2RegularizationCost;   
         cost = cost +  L2RegularizationCost ;      
-    
-
     elseif(strcmp(outputActivationFunc,'softmax'))  
         numTraining = size(Y)(2);
         Y=Y';
@@ -346,10 +334,9 @@ end
 
 
 # Compute the backpropoagation for 1 cycle
-# Input : Neural Network parameters - dA
+# Input : dA- Neural Network parameters 
 #       # cache - forward_cache & activation_cache
-#       # Input features
-#       # Output values Y
+#       # Y-Output values
 #       # outputActivationFunc- sigmoid/softmax
 #       # numClasses
 # Returns: Gradients
@@ -357,7 +344,6 @@ end
 # dl/dbl = dL/dZl
 # dL/dZ_prev=dL/dZl*W
 function [dA_prev dW db] = layerActivationBackward(dA, forward_cache, activation_cache, Y, activationFunc,numClasses)
-
     A_prev = forward_cache{1};
     W =forward_cache{2};
     b = forward_cache{3};
@@ -371,9 +357,7 @@ function [dA_prev dW db] = layerActivationBackward(dA, forward_cache, activation
     elseif(strcmp(activationFunc, "softmax"))
         #dZ = softmaxDerivative(dA, activation_cache,Y,numClasses);
         dZ = stableSoftmaxDerivative(dA, activation_cache,Y,numClasses);
-    endif
-    
-    
+    endif        
     if (strcmp(activationFunc,"softmax"))
       W =forward_cache{2};
       b = forward_cache{3};
@@ -393,10 +377,10 @@ function [dA_prev dW db] = layerActivationBackward(dA, forward_cache, activation
 end 
 
 # Compute the backpropoagation with regularization for 1 cycle
-# Input : Neural Network parameters - dA
+# Input : dA-Neural Network parameters 
 #       # cache - forward_cache & activation_cache
-#       # Input features
-#       # Output values Y
+#       # Y-Output values
+#       # lambd
 #       # outputActivationFunc- sigmoid/softmax
 #       # numClasses
 # Returns: Gradients
@@ -404,7 +388,6 @@ end
 # dl/dbl = dL/dZl
 # dL/dZ_prev=dL/dZl*W
 function [dA_prev dW db] = layerActivationBackwardWithReg(dA, forward_cache, activation_cache, Y, lambd=0, activationFunc,numClasses)
-
     A_prev = forward_cache{1};
     W =forward_cache{2};
     b = forward_cache{3};
@@ -418,8 +401,7 @@ function [dA_prev dW db] = layerActivationBackwardWithReg(dA, forward_cache, act
     elseif(strcmp(activationFunc, "softmax"))
         #dZ = softmaxDerivative(dA, activation_cache,Y,numClasses);
         dZ = stableSoftmaxDerivative(dA, activation_cache,Y,numClasses);
-    endif
-    
+    endif    
     if (strcmp(activationFunc,"softmax"))
       W =forward_cache{2};
       b = forward_cache{3};
@@ -441,24 +423,25 @@ end
 
 # Compute the backpropoagation for 1 cycle
 # Input : AL: Output of L layer Network - weights
-#       # Y  Real output
-#       # caches -- list of caches containing:
+#        Y  Real output
+#        caches -- list of caches containing:
 #       every cache of layerActivationForward() with "relu"/"tanh"
 #       #(it's caches[l], for l in range(L-1) i.e l = 0...L-2)
 #       #the cache of layerActivationForward() with "sigmoid" (it's caches[L-1])
-#       hiddenActivationFunc - Activation function at hidden layers
-#       # outputActivationFunc- sigmoid/softmax
-#       # numClasses
+#       dropoutMat
+#       lambd
+#       keep_prob
+#       hiddenActivationFunc - Activation function at hidden layers sigmoid/tanh/relu
+#       outputActivationFunc- sigmoid/softmax
+#       numClasses
 #    
 #   Returns:
 #    gradients -- A dictionary with the gradients
 #                 gradients["dA" + str(l)] = ... 
 #                 gradients["dW" + str(l)] = ...
-
 function [gradsDA gradsDW gradsDB]= backwardPropagationDeep(AL, Y, activation_caches,forward_caches,
                              dropoutMat, lambd=0, keep_prob=1, hiddenActivationFunc='relu',outputActivationFunc="sigmoid",numClasses)
     
-
     # Set the number of layers
     L = length(activation_caches); 
     m = size(AL)(2);
@@ -560,6 +543,8 @@ end
 #       : hiddenActivationFunc - Activation function at hidden layer relu /tanh
 #       : outputActivationFunc - Activation function at hidden layer sigmoid/softmax
 #       : learning rate
+#       : lambd
+#       : keep_prob
 #       : num of iterations
 #output : Updated weights and biases after each  iteration
 function [weights biases costs] = L_Layer_DeepModel(X, Y, layersDimensions, hiddenActivationFunc='relu',  
@@ -663,7 +648,7 @@ function [weights biases costs] = L_Layer_DeepModel_SGD(X, Y, layersDimensions, 
     
 end
 
- 
+  # Plot cost vs iterations
  function plotCostVsIterations(maxIterations,costs,fig1)
      iterations=[0:1000:maxIterations];
      plot(iterations,costs);
@@ -708,6 +693,7 @@ function plotDecisionBoundary(data,weights, biases,keep_prob=1,hiddenActivationF
 
 end
 
+#Compute scores
 function [AL]= scores(weights, biases, X,hiddenActivationFunc="relu")
     [AL forward_caches activation_caches] = forwardPropagationDeep(X, weights, biases,hiddenActivationFunc);
 end 
@@ -759,6 +745,7 @@ function [mini_batches_X  mini_batches_Y]= random_mini_batches(X, Y, miniBatchSi
     endif
 end
 
+# Plot decision boundary
 function plotDecisionBoundary1( data,weights, biases,keep_prob=1, hiddenActivationFunc="relu")
     % Make classification predictions over a grid of values
     x1plot = linspace(min(data(:,1)), max(data(:,1)), 400)';

@@ -284,7 +284,7 @@ computeCost <- function(AL,Y,outputActivationFunc="sigmoid",numClasses=3){
 # Input : Neural Network parameters - dA
 #       # cache - forward_cache & activation_cache
 #       # Output values Y
-#       # activationFunc
+#       # activationFunc 
 #       # numClasses
 # Returns: Gradients - dA_prev, dW,db
 # dL/dWi= dL/dZi*Al-1

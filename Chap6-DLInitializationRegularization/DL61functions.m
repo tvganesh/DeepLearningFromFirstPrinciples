@@ -1,3 +1,10 @@
+############################################################################################################
+#
+# File   : DLfunctions6.R
+# Author : Tinniam V Ganesh
+# Date   : 16 Apr 2018
+#
+##########################################################################################################
 1;
 # Define sigmoid function
 function [A,cache] = sigmoid(Z)
@@ -509,7 +516,7 @@ end
 
 # Perform Gradient Descent
 # Input : Weights and biases
-#       : gradients
+#       : gradients -gradsW,gradsB
 #       : learning rate
 #       : outputActivationFunc
 #output : Updated weights after 1 iteration
@@ -648,7 +655,7 @@ function [weights biases costs] = L_Layer_DeepModel_SGD(X, Y, layersDimensions, 
     
 end
 
-  # Plot cost vs iterations
+# Plot cost vs iterations
  function plotCostVsIterations(maxIterations,costs,fig1)
      iterations=[0:1000:maxIterations];
      plot(iterations,costs);

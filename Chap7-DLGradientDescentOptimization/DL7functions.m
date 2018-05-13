@@ -1,3 +1,10 @@
+############################################################################################################
+#
+# File   : DLfunctions7.R
+# Author : Tinniam V Ganesh
+# Date   : 16 Apr 2018
+#
+##########################################################################################################
 1;
 # Define sigmoid function
 function [A,cache] = sigmoid(Z)
@@ -26,7 +33,7 @@ function [A,cache] = softmax(Z)
     cache=Z;
 end
 
-# Define Softmax function
+# Define Stable Softmax function
 function [A,cache] = stableSoftmax(Z)
     # Normalize by max value in each row
     shiftZ = Z' - max(Z',[],2);
@@ -64,6 +71,7 @@ end
 
 # Populate a matrix with 1s in rows where Y=1
 # This function may need to be modified if K is not 3, 10
+# This function is used in computing the softmax derivative
 function [Y1] = popMatrix(Y,numClasses)
     Y1=zeros(length(Y),numClasses);
     if(numClasses==3) # For 3 output classes
@@ -100,7 +108,7 @@ function [dZ] = softmaxDerivative(dA,cache,Y, numClasses)
   
 end
 
-# Define Softmax Derivative 
+# Define Stable Softmax Derivative 
 function [dZ] = stableSoftmaxDerivative(dA,cache,Y, numClasses)
   Z = cache;
   # get unnormalized probabilities
@@ -113,15 +121,8 @@ function [dZ] = stableSoftmaxDerivative(dA,cache,Y, numClasses)
 
 end
 
-# Initialize the model 
-# Input : number of features
-#         number of hidden units
-#         number of units in output
-# Returns: Weight and bias matrices and vectors
-
-
 # Initialize model for L layers
-# Input : List of units in each layer
+# Input : Vector of units in each layer
 # Returns: Initial weights and biases matrices for all layers
 function [W b] = initializeDeepModel(layerDimensions)
     rand ("seed", 3);
@@ -138,16 +139,8 @@ function [W b] = initializeDeepModel(layerDimensions)
     endfor
 end
 
-
-# He Initialization the model 
-# Input : number of features
-#         number of hidden units
-#         number of units in output
-# Returns: Weight and bias matrices and vectors
-
-
 # He Initialization for L layers
-# Input : List of units in each layer
+# Input : Vector of units in each layer
 # Returns: Initial weights and biases matrices for all layers
 function [W b] = HeInitializeDeepModel(layerDimensions)
     rand ("seed", 3);
@@ -165,7 +158,7 @@ function [W b] = HeInitializeDeepModel(layerDimensions)
 end
 
 # Xavier Initialization for L layers
-# Input : List of units in each layer
+# Input : Vector of units in each layer
 # Returns: Initial weights and biases matrices for all layers
 function [W b] = XavInitializeDeepModel(layerDimensions)
     rand ("seed", 3);
@@ -183,8 +176,8 @@ function [W b] = XavInitializeDeepModel(layerDimensions)
 end
 
 # Initialize velocity 
-# Input : parameters
-# Returns: Initial velocity v
+# Input : weights, biases
+# Returns: vdW, vdB - Initial velocity 
 function[vdW vdB] =  initializeVelocity(weights, biases)
 
     L = size(weights)(2) # Create an integer
@@ -201,8 +194,8 @@ function[vdW vdB] =  initializeVelocity(weights, biases)
 end   
 
 # Initialize RMSProp
-# Input : parameters
-# Returns: Initial RMSProp
+# Input : weights, biases
+# Returns: sdW, sdB - Initial RMSProp
 function[sdW sdB] =  initializeRMSProp(weights, biases)
 
     L = size(weights)(2) # Create an integer
@@ -220,7 +213,7 @@ end
 
 # Initialize Adam
 # Input : parameters
-# Returns: Initial Adam
+# Returns: vdW, vdB, sdW, sdB -Initial Adam
 function[vdW vdB sdW sdB] =  initializeAdam(weights, biases)
 
     L = size(weights)(2) # Create an integer
@@ -239,7 +232,7 @@ function[vdW vdB sdW sdB] =  initializeAdam(weights, biases)
 end   
     
 # Compute the activation at a layer 'l' for forward prop in a Deep Network
-# Input : A_prec - Activation of previous layer
+# Input : A_prev - Activation of previous layer
 #         W,b - Weight and bias matrices and vectors
 #         activationFunc - Activation function - sigmoid, tanh, relu etc
 # Returns : The Activation of this layer
@@ -268,11 +261,11 @@ end
 
 # Compute the forward propagation for layers 1..L
 # Input : X - Input Features
-#         paramaters: Weights and biases
-#         hiddenActivationFunc - Activation function at hidden layers Relu/tanh
+#         parameters: Weights and biases
+#         keep_prob
+#         hiddenActivationFunc - Activation function at hidden layers Relu/tanh/sigmoid
 #         outputActivationFunc- sigmoid/softmax
-# Returns : AL 
-#           caches
+# Returns : AL, forward,_caches, activation_caches, dropoutMat 
 # The forward propoagtion uses the Relu/tanh activation from layer 1..L-1 and sigmoid actiovation at layer L
 function [AL forward_caches activation_caches dropoutMat] = forwardPropagationDeep(X, weights,biases, keep_prob=1, 
                                                hiddenActivationFunc='relu', outputActivationFunc='sigmoid')
@@ -312,6 +305,7 @@ function [AL forward_caches activation_caches dropoutMat] = forwardPropagationDe
 end
 
 # Pick columns where Y==1
+# This function is used in computeCost
 function [a] = pickColumns(AL,Y,numClasses)
     if(numClasses==3)
         a=[AL(Y==0,1) ;AL(Y==1,2) ;AL(Y==2,3)];
@@ -323,9 +317,9 @@ end
 
 
 # Compute the cost
-# Input : Activation of last layer
-#       : Output from data
-#       :  outputActivationFunc- sigmoid/softmax
+# Input : AL-Activation of last layer
+#       : Y-Output from data
+#       : outputActivationFunc- sigmoid/softmax
 #       : numClasses 
 # Output: cost
 function [cost]= computeCost(AL, Y, outputActivationFunc="sigmoid",numClasses)
@@ -350,9 +344,11 @@ function [cost]= computeCost(AL, Y, outputActivationFunc="sigmoid",numClasses)
 end
 
 # Compute the cost with regularization
-# Input : Activation of last layer
+# Input : weights
+#       : AL - Activation of last layer
 #       : Output from data
-#       :  outputActivationFunc- sigmoid/softmax
+#       : lambd
+#       : outputActivationFunc- sigmoid/softmax
 #       : numClasses 
 # Output: cost
 function [cost]= computeCostWithReg(weights, AL, Y, lambd, outputActivationFunc="sigmoid",numClasses)
@@ -402,10 +398,9 @@ end
 
 
 # Compute the backpropoagation for 1 cycle
-# Input : Neural Network parameters - dA
+# Input : dA- Neural Network parameters 
 #       # cache - forward_cache & activation_cache
-#       # Input features
-#       # Output values Y
+#       # Y-Output values
 #       # outputActivationFunc- sigmoid/softmax
 #       # numClasses
 # Returns: Gradients
@@ -449,10 +444,10 @@ function [dA_prev dW db] = layerActivationBackward(dA, forward_cache, activation
 end 
 
 # Compute the backpropoagation with regularization for 1 cycle
-# Input : Neural Network parameters - dA
+# Input : dA-Neural Network parameters 
 #       # cache - forward_cache & activation_cache
-#       # Input features
-#       # Output values Y
+#       # Y-Output values
+#       # lambd
 #       # outputActivationFunc- sigmoid/softmax
 #       # numClasses
 # Returns: Gradients
@@ -497,14 +492,17 @@ end
 
 # Compute the backpropoagation for 1 cycle
 # Input : AL: Output of L layer Network - weights
-#       # Y  Real output
-#       # caches -- list of caches containing:
+#        Y  Real output
+#        caches -- list of caches containing:
 #       every cache of layerActivationForward() with "relu"/"tanh"
 #       #(it's caches[l], for l in range(L-1) i.e l = 0...L-2)
 #       #the cache of layerActivationForward() with "sigmoid" (it's caches[L-1])
-#       hiddenActivationFunc - Activation function at hidden layers
-#       # outputActivationFunc- sigmoid/softmax
-#       # numClasses
+#       dropoutMat
+#       lambd
+#       keep_prob
+#       hiddenActivationFunc - Activation function at hidden layers sigmoid/tanh/relu
+#       outputActivationFunc- sigmoid/softmax
+#       numClasses
 #    
 #   Returns:
 #    gradients -- A dictionary with the gradients
@@ -582,7 +580,7 @@ end
 
 # Perform Gradient Descent
 # Input : Weights and biases
-#       : gradients
+#       : gradients -gradsW,gradsB
 #       : learning rate
 #       : outputActivationFunc
 #output : Updated weights after 1 iteration
@@ -610,12 +608,12 @@ end
 
 # Update parameters with momentum
 # Input : parameters
-#       : gradients
-#       : v
+#       : gradients -gradsDW,gradsDB
+#       : v -vdW, vdB
 #       : beta
 #       : learningRate
-#       : 
-#output : Updated parameters and velocity
+#       : outputActivationFunc
+#output : Updated weights, biases 
 function [weights biases] = gradientDescentWithMomentum(weights, biases,gradsDW,gradsDB, vdW, vdB, beta, learningRate,outputActivationFunc="sigmoid")
     L = size(weights)(2); # number of layers in the neural network
     # Update rule for each parameter. 
@@ -645,13 +643,14 @@ end
 
 
 # Update parameters with RMSProp
-# Input : parameters
-#       : gradients
-#       : s
-#       : beta
+# Input : parameters - weights, biases
+#       : gradients - gradsDW,gradsDB
+#       : s -sdW, sdB
+#       : beta1
+#       : epsilon
 #       : learningRate
-#       : 
-#output : Updated parameters RMSProp
+#       : outputActivationFunc
+#output : Updated weights and biases RMSProp
 function [weights biases] = gradientDescentWithRMSProp(weights, biases,gradsDW,gradsDB, sdW, sdB, beta1, epsilon, learningRate,outputActivationFunc="sigmoid")
     L = size(weights)(2); # number of layers in the neural network
     # Update rule for each parameter. 
@@ -679,15 +678,19 @@ end
 
 
 # Update parameters with Adam
-# Input : parameters
-#       : gradients
-#       : v
-#       : beta
+# Input : parameters - weights, biases
+#       : gradients -gradsDW,gradsDB
+#       : v - vdW, vdB
+#       : s - sdW, sdB
+#       : t
+#       : beta1
+#       : beta2
+#       : epsilon
 #       : learningRate
-#       : 
-#output : Updated parameters and velocity
+#       : epsilon
+#output : Updated weights and biases
 function [weights biases] = gradientDescentWithAdam(weights, biases,gradsDW,gradsDB, 
-                    vdW, vdB, sdW, sdB, t, beta1, beta2, epsilon, learningRate,outputActivationFunc="sigmoid")
+                    vdW, vdB, sdW, sdB, t, beta1, beta2, epsilon, learningRate,epsilon="sigmoid")
     vdW_corrected = {};
     vdB_corrected = {};
     sdW_corrected = {};
@@ -771,6 +774,8 @@ end
 #       : hiddenActivationFunc - Activation function at hidden layer relu /tanh
 #       : outputActivationFunc - Activation function at hidden layer sigmoid/softmax
 #       : learning rate
+#       : lambd
+#       : keep_prob
 #       : num of iterations
 #output : Updated weights and biases after each  iteration
 function [weights biases costs] = L_Layer_DeepModel(X, Y, layersDimensions, hiddenActivationFunc='relu',  
@@ -823,15 +828,24 @@ end
 # Input : X - Input features
 #       : Y output
 #       : layersDimensions - Dimension of layers
-#       : hiddenActivationFunc - Activation function at hidden layer relu /tanh
+#       : hiddenActivationFunc - Activation function at hidden layer relu /tanh/sigmoid
 #       : outputActivationFunc - Activation function at hidden layer sigmoid/softmax
 #       : learning rate
+#       : lrDecay
+#       : decayRate
+#       : lambd      
+#       : keep_prob
+#       : optimizer
+#       : beta
+#       : beta1
+#       : beta2
+#       : epsilon
 #       : mini_batch_size
 #       : num of epochs
 #output : Updated weights and biases after each  iteration
 function [weights biases costs] = L_Layer_DeepModel_SGD(X, Y, layersDimensions, hiddenActivationFunc='relu',  
                                          outputActivationFunc="sigmoid",learningRate = .3, 
-                                         lrDecay=false,decayRate=1,
+                                         optimizer     lrDecay=false,decayRate=1,
                                          lambd=0, keep_prob=1,
                                          optimizer="gd", beta=0.9, beta1=0.9, beta2=0.999,epsilon=10^-8,
                                          mini_batch_size = 64, num_epochs = 2500)
@@ -917,7 +931,7 @@ function [weights biases costs] = L_Layer_DeepModel_SGD(X, Y, layersDimensions, 
     
 end
 
- 
+ # Plot cost vs iterations
  function plotCostVsIterations(maxIterations,costs,fig1)
      iterations=[0:1000:maxIterations];
      plot(iterations,costs);
@@ -927,6 +941,7 @@ end
      print -dpng figReg2-o
 end;
 
+ # Plot cost vs epochs
  function plotCostVsEpochs(maxEpochs,costs,fig1)
      epochs=[0:1000:maxEpochs];
      plot(epochs,costs);

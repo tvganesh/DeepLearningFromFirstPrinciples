@@ -183,8 +183,9 @@ def XavInitializeDeepModel(layerDimensions):
     return Z, cache
 
 # Compute the activation at a layer 'l' for forward prop in a Deep Network
-# Input : A_prec - Activation of previous layer
+# Input : A_prev - Activation of previous layer
 #         W,b - Weight and bias matrices and vectors
+#         keep_prob
 #         activationFunc - Activation function - sigmoid, tanh, relu etc
 # Returns : The Activation of this layer
 #         : 
@@ -212,11 +213,13 @@ def layerActivationForward(A_prev, W, b, keep_prob=1, activationFunc="relu"):
 
 # Compute the forward propagation for layers 1..L
 # Input : X - Input Features
-#         paramaters: Weights and biases
+#         parameters: Weights and biases
+#         keep_prob
 #         hiddenActivationFunc - Activation function at hidden layers Relu/tanh
 #         outputActivationFunc - Activation function at output - sigmoid/softmax
 # Returns : AL 
 #           caches
+#           dropoutMat
 # The forward propoagtion uses the Relu/tanh activation from layer 1..L-1 and sigmoid actiovation at layer L
 def forwardPropagationDeep(X, parameters,keep_prob=1, hiddenActivationFunc='relu',outputActivationFunc='sigmoid'):
     caches = []
@@ -346,9 +349,7 @@ def layerActivationBackward(dA, cache, Y, keep_prob=1, activationFunc="relu"):
     if activationFunc == 'softmax':
         dW = 1/numtraining * np.dot(A_prev,dZ)
         db = 1/numtraining * np.sum(dZ, axis=0, keepdims=True)
-        dA_prev = np.dot(dZ,W)
-        
-
+        dA_prev = np.dot(dZ,W)        
     else:
         #print(numtraining)
         dW = 1/numtraining *(np.dot(dZ,A_prev.T))
@@ -361,7 +362,7 @@ def layerActivationBackward(dA, cache, Y, keep_prob=1, activationFunc="relu"):
 
 
 # Compute the backpropoagation with regularization for 1 cycle
-# Input : Neural Network parameters - dA
+# Input : dA-Neural Network parameters 
 #       # cache - forward_cache & activation_cache
 #       # Output values Y
 #       # lambd
@@ -518,7 +519,6 @@ def gradientDescent(parameters, gradients, learningRate,outputActivationFunc="si
 #       : num of iteration
 #       : initType
 #output : parameters
-    
 def L_Layer_DeepModel(X1, Y1, layersDimensions, hiddenActivationFunc='relu', outputActivationFunc="sigmoid", 
                       learningRate = .3,  lambd=0, keep_prob=1, num_iterations = 10000,initType="default", print_cost=False,figure="figa.png"):
 

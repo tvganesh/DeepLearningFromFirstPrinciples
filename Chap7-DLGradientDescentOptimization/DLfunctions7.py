@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Sun Jan 14 19:10:25 2018
-
-@author: Ganesh
-"""
-######################################################
-# DL functions
-######################################################
+############################################################################################################
+#
+# File: DLfunctions7.py
+# Developer: Tinniam V Ganesh
+# Date : 16 Apr 2018
+#
+##########################################################################################################
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
@@ -43,7 +42,7 @@ def softmax(Z):
     cache=Z
     return A,cache
 
-# Conmpute the softmax of a vector
+# Conmpute the stable softmax of a vector
 def stableSoftmax(Z):  
     #Compute the softmax of vector x in a numerically stable way.
     shiftZ = Z.T - np.max(Z.T,axis=1).reshape(-1,1)
@@ -54,7 +53,7 @@ def stableSoftmax(Z):
     cache=Z
     return A,cache
 
-# Compute the detivative of Relu 
+# Compute the derivative of Relu 
 def reluDerivative(dA, cache):
   
     Z = cache
@@ -93,7 +92,7 @@ def softmaxDerivative(dA, cache,y,numTraining):
       dZ[range(int(numTraining)),y[:,0]] -= 1
       return(dZ)
 
-# Compute the derivative of softmax
+# Compute the derivative of Stable softmax
 def stableSoftmaxDerivative(dA, cache,y,numTraining):
       # Note : dA not used. dL/dZ = dL/dA * dA/dZ = pi-yi
       Z = cache 
@@ -186,7 +185,7 @@ def XavInitializeDeepModel(layerDimensions):
 
 # Initialize velocity of 
 # Input : parameters
-# Returns: Initial velocity v
+# Returns: v - Initial velocity 
 def initializeVelocity(parameters):
 
     L = len(parameters)//2 # Create an integer
@@ -202,8 +201,8 @@ def initializeVelocity(parameters):
     return v
 
 # Initialize RMSProp param
-# Input : parameters
-# Returns: s
+# Input : List of units in each layer
+# Returns: s - Initial RMSProp
 def initializeRMSProp(parameters):
 
     L = len(parameters)//2 # Create an integer
@@ -218,9 +217,9 @@ def initializeRMSProp(parameters):
         
     return s
 
-# Initialize Add param
+# Initialize Adam param
 # Input : List of units in each layer
-# Returns: v and s
+# Returns: v and s - Adam paramaters
 def initializeAdam(parameters) :
     
     L = len(parameters) // 2 # number of layers in the neural networks
@@ -240,11 +239,13 @@ def initializeAdam(parameters) :
                                        parameters['b' + str(l+1)].shape[1])) 
     return v, s
 
+
 # Compute the activation at a layer 'l' for forward prop in a Deep Network
-# Input : A_prec - Activation of previous layer
+# Input : A_prev - Activation of previous layer
 #         W,b - Weight and bias matrices and vectors
+#        keep_prob
 #         activationFunc - Activation function - sigmoid, tanh, relu etc
-# Returns : The Activation of this layer
+# Returns : A, cache
 #         : 
 # Z = W * X + b
 # A = sigmoid(Z), A= Relu(Z), A= tanh(Z)
@@ -270,11 +271,13 @@ def layerActivationForward(A_prev, W, b, keep_prob=1, activationFunc="relu"):
 
 # Compute the forward propagation for layers 1..L
 # Input : X - Input Features
-#         paramaters: Weights and biases
+#         parameters: Weights and biases
+#         keep_prob
 #         hiddenActivationFunc - Activation function at hidden layers Relu/tanh
 #         outputActivationFunc - Activation function at output - sigmoid/softmax
 # Returns : AL 
 #           caches
+#           dropoutMat
 # The forward propoagtion uses the Relu/tanh activation from layer 1..L-1 and sigmoid actiovation at layer L
 def forwardPropagationDeep(X, parameters,keep_prob=1, hiddenActivationFunc='relu',outputActivationFunc='sigmoid'):
     caches = []
@@ -300,8 +303,7 @@ def forwardPropagationDeep(X, parameters,keep_prob=1, hiddenActivationFunc='relu
         A = np.divide(A,keep_prob) 
       
         caches.append(cache)
-
-    
+   
     # last layer 
     AL, cache = layerActivationForward(A, parameters['W'+str(L)], parameters['b'+str(L)], activationFunc = outputActivationFunc)
     caches.append(cache)
@@ -310,10 +312,10 @@ def forwardPropagationDeep(X, parameters,keep_prob=1, hiddenActivationFunc='relu
 
 
 # Compute the cost
-# Input : Activation of last layer
-#       : Output from data
+# Input : parameters
+#       : AL
 #       : Y
-#       :outputActivationFunc - Activation function at output - sigmoid/softmax
+#       :outputActivationFunc - Activation function at output - sigmoid/softmax/tanh
 # Output: cost
 def computeCost(parameters,AL,Y,outputActivationFunc="sigmoid"):
     if outputActivationFunc=="sigmoid":
@@ -333,10 +335,11 @@ def computeCost(parameters,AL,Y,outputActivationFunc="sigmoid"):
 
 
 # Compute the cost with regularization
-# Input : Activation of last layer
-#       : Output from data
+# Input : parameters
+#       : AL
 #       : Y
-#       :outputActivationFunc - Activation function at output - sigmoid/softmax
+#       : lambd
+#       :outputActivationFunc - Activation function at output - sigmoid/softmax/tanh
 # Output: cost
 def computeCostWithReg(parameters,AL,Y,lambd, outputActivationFunc="sigmoid"):
   
@@ -377,10 +380,11 @@ def computeCostWithReg(parameters,AL,Y,lambd, outputActivationFunc="sigmoid"):
      
     return cost
 
-# Compute the backpropoagation for 1 cycle
+# Compute the backpropoagation for 1 cycle with dropout included
 # Input : Neural Network parameters - dA
 #       # cache - forward_cache & activation_cache
 #       # Input features
+#       # keep_prob
 #       # Output values Y
 # Returns: Gradients
 # dL/dWi= dL/dZi*Al-1
@@ -405,8 +409,6 @@ def layerActivationBackward(dA, cache, Y, keep_prob=1, activationFunc="relu"):
         dW = 1/numtraining * np.dot(A_prev,dZ)
         db = 1/numtraining * np.sum(dZ, axis=0, keepdims=True)
         dA_prev = np.dot(dZ,W)
-        
-
     else:
         #print(numtraining)
         dW = 1/numtraining *(np.dot(dZ,A_prev.T))
@@ -419,10 +421,12 @@ def layerActivationBackward(dA, cache, Y, keep_prob=1, activationFunc="relu"):
 
 
 # Compute the backpropoagation with regularization for 1 cycle
-# Input : Neural Network parameters - dA
+# Input : dA- Neural Network parameters 
 #       # cache - forward_cache & activation_cache
-#       # Input features
 #       # Output values Y
+#       # lambd
+#       # activationFunc
+# Returns dA_prev, dW, db
 # Returns: Gradients
 # dL/dWi= dL/dZi*Al-1
 # dl/dbl = dL/dZl
@@ -462,17 +466,19 @@ def layerActivationBackwardWithReg(dA, cache, Y, lambd, activationFunc):
 # Input : AL: Output of L layer Network - weights
 #       # Y  Real output
 #       # caches -- list of caches containing:
+#       # dropoutMat
+#       # lambd
+#       # keep_prob
 #       every cache of layerActivationForward() with "relu"/"tanh"
 #       #(it's caches[l], for l in range(L-1) i.e l = 0...L-2)
 #       #the cache of layerActivationForward() with "sigmoid" (it's caches[L-1])
-#       hiddenActivationFunc - Activation function at hidden layers - relu/sigmoid/tanh
-#       #         outputActivationFunc - Activation function at output - sigmoid/softmax
+#       # hiddenActivationFunc - Activation function at hidden layers - relu/sigmoid/tanh
+#       #outputActivationFunc - Activation function at output - sigmoid/softmax
 #    
 #   Returns:
 #    gradients -- A dictionary with the gradients
 #                 gradients["dA" + str(l)] = ... 
 #                 gradients["dW" + str(l)] = ...
-
 def backwardPropagationDeep(AL, Y, caches, dropoutMat, lambd=0, keep_prob=1, hiddenActivationFunc='relu',outputActivationFunc="sigmoid"):
     #initialize the gradients
     gradients = {}
@@ -564,7 +570,7 @@ def gradientDescent(parameters, gradients, learningRate,outputActivationFunc="si
 #       : v
 #       : beta
 #       : learningRate
-#       : 
+#       : outputActivationFunc - softmax/sigmoid
 #output : Updated parameters and velocity
 def gradientDescentWithMomentum(parameters, gradients, v, beta, learningRate, outputActivationFunc="sigmoid"):
 
@@ -597,11 +603,11 @@ def gradientDescentWithMomentum(parameters, gradients, v, beta, learningRate, ou
 # Update parameters with RMSProp
 # Input : parameters
 #       : gradients
-#       : v
-#       : beta
+#       : s
+#       : beta1
 #       : learningRate
-#       : 
-#output : Updated parameters and velocity
+#       : outputActivationFunc - sigmoid/softmax
+# output : Updated parameters and RMSProp
 def gradientDescentWithRMSProp(parameters, gradients, s, beta1, epsilon, learningRate, outputActivationFunc="sigmoid"):
 
     L = len(parameters) // 2 # number of layers in the neural networks
@@ -641,12 +647,22 @@ def gradientDescentWithRMSProp(parameters, gradients, s, beta1, epsilon, learnin
 
     return parameters, s
 
-
+# Update parameters with Adam
+# Input : parameters
+#       : gradients
+#       : v
+#       : s
+#       : t
+#       : beta1
+#       : beta2
+#       : epsilon
+#       : learningRate
+#       : outputActivationFunc - sigmoid/softmax
+# output : Updated parameters and RMSProp
 def gradientDescentWithAdam(parameters, gradients, v, s, t,
                                 beta1 = 0.9, beta2 = 0.999,  epsilon = 1e-8,
                                 learningRate=0.1, outputActivationFunc="sigmoid"):
-
-    
+   
     L = len(parameters) // 2  
     # Initializing first moment estimate, python dictionary               
     v_corrected = {}   
@@ -745,11 +761,13 @@ def gradientDescentWithAdam(parameters, gradients, v, s, t,
 #       : Y output
 #       : layersDimensions - Dimension of layers
 #       : hiddenActivationFunc - Activation function at hidden layer relu /tanh/sigmoid
+#       : outputActivationFunc - Activation function at output layer sigmoid/softmax
 #       : learning rate
+#       : lambd
+#       : keep_prob
 #       : num of iteration
-#       : outputActivationFunc - Activation function at output - sigmoid/softmax
-#output : Updated weights after 1 iteration
-    
+#       : initType
+#output : parameters  
 def L_Layer_DeepModel(X1, Y1, layersDimensions, hiddenActivationFunc='relu', outputActivationFunc="sigmoid", 
                       learningRate = .3,  lambd=0, keep_prob=1, num_iterations = 10000,initType="default", print_cost=False,figure="figa.png"):
 
@@ -807,11 +825,20 @@ def L_Layer_DeepModel(X1, Y1, layersDimensions, hiddenActivationFunc='relu', out
 #       : Y output
 #       : layersDimensions - Dimension of layers
 #       : hiddenActivationFunc - Activation function at hidden layer relu /tanh/sigmoid
-#       : learning rate
-#       : num of iteration
 #       : outputActivationFunc - Activation function at output - sigmoid/softmax
-#output : Updated weights after 1 iteration
-
+#       : learning rate
+#       : lrDecay
+#       : lambd
+#       : keep_prob
+#       : optimizer
+#       : beta
+#       : beta1
+#       : beta2
+#       : epsilon
+#       : mini_batch_size
+#       : num_epochs
+#       : 
+#output : Updated weights and biases
 def L_Layer_DeepModel_SGD(X1, Y1, layersDimensions, hiddenActivationFunc='relu', outputActivationFunc="sigmoid",
                           learningRate = .3, lrDecay=False, decayRate=1,  
                           lambd=0, keep_prob=1, optimizer="gd",beta=0.9,beta1=0.9, beta2=0.999,
@@ -919,6 +946,11 @@ def L_Layer_DeepModel_SGD(X1, Y1, layersDimensions, hiddenActivationFunc='relu',
 
 
 # Create random mini batches
+# Input : X - Input features
+#       : Y- output
+#       : miniBatchSizes
+#       : seed
+#output : mini_batches
 def random_mini_batches(X, Y, miniBatchSize = 64, seed = 0):
     
     np.random.seed(seed)    
@@ -994,12 +1026,13 @@ def plot_decision_boundary(model, X, y,lr,figure1="figb.png"):
     plt.savefig(figure1, bbox_inches='tight')
     #plt.show()
 
-    
+# Predict output  
 def predict(parameters, X,keep_prob=1,hiddenActivationFunc="relu",outputActivationFunc="sigmoid"):
     A2, cache,dropoutMat = forwardPropagationDeep(X, parameters, keep_prob=1, hiddenActivationFunc="relu",outputActivationFunc=outputActivationFunc)
     predictions = (A2>0.5)    
     return predictions
 
+# Predict probabilities
 def predict_proba(parameters, X,outputActivationFunc="sigmoid"):
     A2, cache = forwardPropagationDeep(X, parameters)
     if outputActivationFunc=="sigmoid":
@@ -1037,7 +1070,8 @@ def plot_decision_boundary1(X, y,W1,b1,W2,b2,figure2="figc.png"):
     plt.ylim(yy.min(), yy.max())
     plt.savefig(figure2, bbox_inches='tight')
     
-    
+
+# Load the data set  
 def load_dataset():
     np.random.seed(1)
     train_X, train_Y = sklearn.datasets.make_circles(n_samples=300, noise=.05)

@@ -260,6 +260,7 @@ layerActivationForward <- function(A_prev, W, b, activationFunc){
 #         outputActivationFunc - Activation function at hidden layer sigmoid/softmax
 # Returns : AL 
 #           caches
+#           dropoutMat
 # The forward propoagtion uses the Relu/tanh activation from layer 1..L-1 and sigmoid actiovation at layer L
 forwardPropagationDeep <- function(X, parameters,keep_prob=1, hiddenActivationFunc='relu',
                                            outputActivationFunc='sigmoid'){
@@ -651,7 +652,7 @@ gradientDescent  <- function(parameters, gradients, learningRate,outputActivatio
 #       : learning rate
 #       : num of iterations
 #       : initType
-#output : Updated weights after each  iteration
+#output : Updated weights 
 L_Layer_DeepModel <- function(X, Y, layersDimensions,
                               hiddenActivationFunc='relu', 
                               outputActivationFunc= 'sigmoid',

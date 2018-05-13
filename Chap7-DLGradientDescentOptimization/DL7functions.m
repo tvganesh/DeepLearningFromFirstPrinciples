@@ -508,7 +508,7 @@ end
 #    gradients -- A dictionary with the gradients
 #                 gradients["dA" + str(l)] = ... 
 #                 gradients["dW" + str(l)] = ...
-
+#                 gradients["db" + str(l)] = ...
 function [gradsDA gradsDW gradsDB]= backwardPropagationDeep(AL, Y, activation_caches,forward_caches,
                              dropoutMat, lambd=0, keep_prob=1, hiddenActivationFunc='relu',outputActivationFunc="sigmoid",numClasses)
     
@@ -850,7 +850,7 @@ function [weights biases costs] = L_Layer_DeepModel_SGD(X, Y, layersDimensions, 
                                          optimizer="gd", beta=0.9, beta1=0.9, beta2=0.999,epsilon=10^-8,
                                          mini_batch_size = 64, num_epochs = 2500)
                                          
-     disp("here");
+     disp("Values");
      printf("learningRate=%f ",learningRate);
      printf("lrDecay=%d ",lrDecay);
      printf("decayRate=%f ",decayRate);
@@ -986,6 +986,7 @@ function plotDecisionBoundary(data,weights, biases,keep_prob=1,hiddenActivationF
 
 end
 
+# Compute scores
 function [AL]= scores(weights, biases, X,hiddenActivationFunc="relu")
     [AL forward_caches activation_caches] = forwardPropagationDeep(X, weights, biases,hiddenActivationFunc);
 end 
@@ -1037,6 +1038,7 @@ function [mini_batches_X  mini_batches_Y]= random_mini_batches(X, Y, miniBatchSi
     endif
 end
 
+# Plot decision boundary
 function plotDecisionBoundary1( data,weights, biases,keep_prob=1, hiddenActivationFunc="relu")
     % Make classification predictions over a grid of values
     x1plot = linspace(min(data(:,1)), max(data(:,1)), 400)';
